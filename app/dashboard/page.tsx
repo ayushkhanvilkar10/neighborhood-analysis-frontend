@@ -13,6 +13,16 @@ interface Search {
   created_at: string;
 }
 
+interface Analysis {
+  requests_311: string;
+  crime_safety: string;
+  property_mix: string;
+  overall_verdict: string;
+  neighborhood: string;
+  street: string;
+  zip_code: string;
+}
+
 const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
 function authHeaders(session: Session) {
@@ -33,6 +43,7 @@ export default function DashboardPage() {
   const [zipCode, setZipCode] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
+  const [analysis, setAnalysis] = useState<Analysis | null>(null);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -64,22 +75,29 @@ export default function DashboardPage() {
     e.preventDefault();
     if (!session) return;
     setFormError(null);
+    setAnalysis(null);
     setSubmitting(true);
 
     try {
       const res = await fetch(`${API_URL}/searches`, {
         method: "POST",
         headers: authHeaders(session),
-        body: JSON.stringify({
-          neighborhood,
-          street,
-          zip_code: zipCode,
-        }),
+        body: JSON.stringify({ neighborhood, street, zip_code: zipCode }),
       });
       if (!res.ok) {
         const body = await res.json().catch(() => null);
         throw new Error(body?.detail ?? "Failed to save search");
       }
+      const data = await res.json();
+      setAnalysis({
+        requests_311:    data.requests_311,
+        crime_safety:    data.crime_safety,
+        property_mix:    data.property_mix,
+        overall_verdict: data.overall_verdict,
+        neighborhood:    data.neighborhood,
+        street:          data.street,
+        zip_code:        data.zip_code,
+      });
       setNeighborhood("");
       setStreet("");
       setZipCode("");
@@ -100,8 +118,9 @@ export default function DashboardPage() {
       });
       if (!res.ok) throw new Error();
       setSearches((prev) => prev.filter((s) => s.id !== id));
+      setAnalysis(null);
     } catch {
-      /* silently ignore – card stays visible so user can retry */
+      /* silently ignore */
     }
   }
 
@@ -165,7 +184,7 @@ export default function DashboardPage() {
                   id="street"
                   type="text"
                   required
-                  placeholder="e.g. Boylston St"
+                  placeholder="e.g. BOYLSTON ST"
                   value={street}
                   onChange={(e) => setStreet(e.target.value)}
                   className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
@@ -187,19 +206,78 @@ export default function DashboardPage() {
               </div>
             </div>
 
-            {formError && (
-              <p className="text-sm text-red-600">{formError}</p>
-            )}
+            {formError && <p className="text-sm text-red-600">{formError}</p>}
 
             <button
               type="submit"
               disabled={submitting}
               className="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50"
             >
-              {submitting ? "Saving…" : "Save Search"}
+              {submitting ? "Analyzing…" : "Analyze & Save"}
             </button>
           </form>
         </section>
+
+        {/* Loading state */}
+        {submitting && (
+          <section className="bg-white rounded-lg border border-gray-200 p-6">
+            <p className="text-sm text-gray-500 animate-pulse">
+              Running neighborhood analysis — this takes about 15 seconds…
+            </p>
+          </section>
+        )}
+
+        {/* Analysis Report */}
+        {analysis && !submitting && (
+          <section className="bg-white rounded-lg border border-gray-200 p-6 space-y-6">
+            <div>
+              <h2 className="text-lg font-semibold text-gray-900">
+                Analysis Report
+              </h2>
+              <p className="text-sm text-gray-500 mt-1">
+                {analysis.neighborhood} · {analysis.street} · {analysis.zip_code}
+              </p>
+            </div>
+
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <div className="rounded-md bg-gray-50 border border-gray-200 p-4">
+                <p className="text-xs font-semibold uppercase tracking-wide text-gray-400 mb-2">
+                  311 Service Requests
+                </p>
+                <p className="text-sm text-gray-700 leading-relaxed">
+                  {analysis.requests_311}
+                </p>
+              </div>
+
+              <div className="rounded-md bg-gray-50 border border-gray-200 p-4">
+                <p className="text-xs font-semibold uppercase tracking-wide text-gray-400 mb-2">
+                  Crime & Safety
+                </p>
+                <p className="text-sm text-gray-700 leading-relaxed">
+                  {analysis.crime_safety}
+                </p>
+              </div>
+
+              <div className="rounded-md bg-gray-50 border border-gray-200 p-4">
+                <p className="text-xs font-semibold uppercase tracking-wide text-gray-400 mb-2">
+                  Property Mix
+                </p>
+                <p className="text-sm text-gray-700 leading-relaxed">
+                  {analysis.property_mix}
+                </p>
+              </div>
+
+              <div className="rounded-md bg-blue-50 border border-blue-200 p-4">
+                <p className="text-xs font-semibold uppercase tracking-wide text-blue-400 mb-2">
+                  Overall Verdict
+                </p>
+                <p className="text-sm text-blue-900 leading-relaxed font-medium">
+                  {analysis.overall_verdict}
+                </p>
+              </div>
+            </div>
+          </section>
+        )}
 
         {/* Saved Searches */}
         <section>
@@ -221,9 +299,7 @@ export default function DashboardPage() {
                   className="bg-white rounded-lg border border-gray-200 p-4 flex items-start justify-between"
                 >
                   <div>
-                    <p className="font-medium text-gray-900">
-                      {s.neighborhood}
-                    </p>
+                    <p className="font-medium text-gray-900">{s.neighborhood}</p>
                     <p className="text-sm text-gray-600">{s.street}</p>
                     <p className="text-sm text-gray-600">{s.zip_code}</p>
                   </div>
