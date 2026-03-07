@@ -7,8 +7,6 @@ import type { Session } from "@supabase/supabase-js";
 
 // ─────────────────────────────────────────────
 // Neighborhood options
-// Multi-neighborhood values (joined by " / ") are split into individual labels
-// but each maps back to the original canonical value that the backend expects.
 // ─────────────────────────────────────────────
 const NEIGHBORHOODS: { label: string; value: string }[] = [
   { label: "Allston",                   value: "Allston" },
@@ -40,7 +38,6 @@ const NEIGHBORHOODS: { label: string; value: string }[] = [
 
 // ─────────────────────────────────────────────
 // Neighborhood → BPD District mapping
-// Mirrors the mapping in agent/neighborhood_analysis.py
 // ─────────────────────────────────────────────
 const NEIGHBORHOOD_TO_DISTRICT: Record<string, string> = {
   "Allston":                                        "D14",
@@ -68,7 +65,6 @@ const NEIGHBORHOOD_TO_DISTRICT: Record<string, string> = {
 
 // ─────────────────────────────────────────────
 // Neighborhood → Zip Code mapping
-// Outliers excluded: 02026, 02133, 02146, 02219, 02445, 02446, 02458, 02467
 // ─────────────────────────────────────────────
 const NEIGHBORHOOD_ZIP_CODES: Record<string, string[]> = {
   "Allston":                                        ["02134"],
@@ -94,25 +90,33 @@ const NEIGHBORHOOD_ZIP_CODES: Record<string, string[]> = {
   "West Roxbury":                                   ["02132"],
 };
 
-const BOSTON_API = "https://data.boston.gov/api/3/action/datastore_search_sql";
+const BOSTON_API   = "https://data.boston.gov/api/3/action/datastore_search_sql";
 const CRIME_DATASET = "b973d8cb-eeb2-4e7e-99da-c92938efc9c0";
 
+// ─────────────────────────────────────────────
+// Types
+// ─────────────────────────────────────────────
 interface Search {
-  id: string;
+  id:           string;
   neighborhood: string;
-  street: string;
-  zip_code: string;
-  created_at: string;
+  street:       string;
+  zip_code:     string;
+  created_at:   string;
 }
 
 interface Analysis {
-  requests_311: string;
-  crime_safety: string;
-  property_mix: string;
-  overall_verdict: string;
-  neighborhood: string;
-  street: string;
-  zip_code: string;
+  requests_311:        string;
+  crime_safety:        string;
+  property_mix:        string;
+  permit_activity:     string;
+  entertainment_scene: string;
+  traffic_safety:      string;
+  gun_violence:        string;
+  green_space:         string;
+  overall_verdict:     string;
+  neighborhood:        string;
+  street:              string;
+  zip_code:            string;
 }
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL;
@@ -124,30 +128,65 @@ function authHeaders(session: Session) {
   };
 }
 
+// ─────────────────────────────────────────────
+// Analysis card component
+// ─────────────────────────────────────────────
+function AnalysisCard({
+  label,
+  content,
+  variant = "default",
+}: {
+  label: string;
+  content: string;
+  variant?: "default" | "verdict";
+}) {
+  if (variant === "verdict") {
+    return (
+      <div className="rounded-md bg-blue-50 border border-blue-200 p-4 col-span-1 sm:col-span-2">
+        <p className="text-xs font-semibold uppercase tracking-wide text-blue-400 mb-2">
+          {label}
+        </p>
+        <p className="text-sm text-blue-900 leading-relaxed font-medium">{content}</p>
+      </div>
+    );
+  }
+  return (
+    <div className="rounded-md bg-gray-50 border border-gray-200 p-4">
+      <p className="text-xs font-semibold uppercase tracking-wide text-gray-400 mb-2">
+        {label}
+      </p>
+      <p className="text-sm text-gray-700 leading-relaxed">{content}</p>
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────
+// Dashboard page
+// ─────────────────────────────────────────────
 export default function DashboardPage() {
   const router = useRouter();
-  const [session, setSession] = useState<Session | null>(null);
-  const [searches, setSearches] = useState<Search[]>([]);
+  const [session, setSession]               = useState<Session | null>(null);
+  const [searches, setSearches]             = useState<Search[]>([]);
   const [loadingSearches, setLoadingSearches] = useState(true);
 
   // Neighborhood combobox
   const [neighborhoodInput, setNeighborhoodInput] = useState("");
-  const [neighborhood, setNeighborhood] = useState("");
+  const [neighborhood, setNeighborhood]           = useState("");
   const [showNeighborhoodDropdown, setShowNeighborhoodDropdown] = useState(false);
   const neighborhoodRef = useRef<HTMLDivElement>(null);
 
   // Street combobox
-  const [streetInput, setStreetInput] = useState("");
-  const [street, setStreet] = useState("");
+  const [streetInput, setStreetInput]           = useState("");
+  const [street, setStreet]                     = useState("");
   const [streetSuggestions, setStreetSuggestions] = useState<string[]>([]);
-  const [loadingStreets, setLoadingStreets] = useState(false);
+  const [loadingStreets, setLoadingStreets]     = useState(false);
   const [showStreetDropdown, setShowStreetDropdown] = useState(false);
   const streetRef = useRef<HTMLDivElement>(null);
 
-  const [zipCode, setZipCode] = useState("");
+  const [zipCode, setZipCode]     = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
-  const [analysis, setAnalysis] = useState<Analysis | null>(null);
+  const [analysis, setAnalysis]   = useState<Analysis | null>(null);
 
   // Auto-populate zip when neighborhood has only one option
   useEffect(() => {
@@ -157,7 +196,7 @@ export default function DashboardPage() {
     else setZipCode("");
   }, [neighborhood]);
 
-  // Debounced street fetch — fires 300ms after user stops typing
+  // Debounced street fetch
   useEffect(() => {
     const district = NEIGHBORHOOD_TO_DISTRICT[neighborhood];
     if (!district || streetInput.trim().length < 2) {
@@ -168,7 +207,7 @@ export default function DashboardPage() {
       setLoadingStreets(true);
       try {
         const sql = `SELECT DISTINCT "STREET" FROM "${CRIME_DATASET}" WHERE "DISTRICT" = '${district}' AND "STREET" ILIKE '${streetInput.trim().toUpperCase()}%' ORDER BY "STREET" LIMIT 20`;
-        const res = await fetch(`${BOSTON_API}?sql=${encodeURIComponent(sql)}`);
+        const res  = await fetch(`${BOSTON_API}?sql=${encodeURIComponent(sql)}`);
         const data = await res.json();
         const streets: string[] = (data.result?.records ?? [])
           .map((r: { STREET: string }) => r.STREET)
@@ -184,22 +223,21 @@ export default function DashboardPage() {
     return () => clearTimeout(timer);
   }, [streetInput, neighborhood]);
 
-  // Close neighborhood dropdown on outside click
+  // Close dropdowns on outside click
   useEffect(() => {
-    function handler(e: MouseEvent) {
+    const handler = (e: MouseEvent) => {
       if (neighborhoodRef.current && !neighborhoodRef.current.contains(e.target as Node))
         setShowNeighborhoodDropdown(false);
-    }
+    };
     document.addEventListener("mousedown", handler);
     return () => document.removeEventListener("mousedown", handler);
   }, []);
 
-  // Close street dropdown on outside click
   useEffect(() => {
-    function handler(e: MouseEvent) {
+    const handler = (e: MouseEvent) => {
       if (streetRef.current && !streetRef.current.contains(e.target as Node))
         setShowStreetDropdown(false);
-    }
+    };
     document.addEventListener("mousedown", handler);
     return () => document.removeEventListener("mousedown", handler);
   }, []);
@@ -232,7 +270,7 @@ export default function DashboardPage() {
     e.preventDefault();
     if (!session) return;
     if (!neighborhood) { setFormError("Please select a neighborhood from the list."); return; }
-    if (!street) { setFormError("Please select a street from the suggestions."); return; }
+    if (!street)       { setFormError("Please select a street from the suggestions."); return; }
     setFormError(null);
     setAnalysis(null);
     setSubmitting(true);
@@ -248,13 +286,18 @@ export default function DashboardPage() {
       }
       const data = await res.json();
       setAnalysis({
-        requests_311:    data.requests_311,
-        crime_safety:    data.crime_safety,
-        property_mix:    data.property_mix,
-        overall_verdict: data.overall_verdict,
-        neighborhood:    data.neighborhood,
-        street:          data.street,
-        zip_code:        data.zip_code,
+        requests_311:        data.requests_311,
+        crime_safety:        data.crime_safety,
+        property_mix:        data.property_mix,
+        permit_activity:     data.permit_activity,
+        entertainment_scene: data.entertainment_scene,
+        traffic_safety:      data.traffic_safety,
+        gun_violence:        data.gun_violence,
+        green_space:         data.green_space,
+        overall_verdict:     data.overall_verdict,
+        neighborhood:        data.neighborhood,
+        street:              data.street,
+        zip_code:            data.zip_code,
       });
       setNeighborhoodInput(""); setNeighborhood("");
       setStreetInput("");       setStreet("");
@@ -296,13 +339,17 @@ export default function DashboardPage() {
       <nav className="bg-white border-b border-gray-200">
         <div className="mx-auto max-w-4xl flex items-center justify-between px-4 py-3">
           <span className="text-lg font-semibold text-gray-900">Neighborhood Analysis</span>
-          <button onClick={handleSignOut} className="text-sm font-medium text-gray-600 hover:text-gray-900">
+          <button
+            onClick={handleSignOut}
+            className="text-sm font-medium text-gray-600 hover:text-gray-900"
+          >
             Sign Out
           </button>
         </div>
       </nav>
 
       <main className="mx-auto max-w-4xl px-4 py-8 space-y-8">
+
         {/* Form */}
         <section className="bg-white rounded-lg border border-gray-200 p-6">
           <h2 className="text-lg font-semibold text-gray-900 mb-4">Add a Search</h2>
@@ -364,11 +411,10 @@ export default function DashboardPage() {
                   value={streetInput}
                   onChange={(e) => {
                     setStreetInput(e.target.value);
-                    setStreet(""); // clear confirmed value until user picks from list
+                    setStreet("");
                   }}
                   className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 disabled:bg-gray-50 disabled:text-gray-400"
                 />
-                {/* Suggestions dropdown */}
                 {showStreetDropdown && (
                   <ul className="absolute z-10 mt-1 w-full max-h-56 overflow-auto rounded-md border border-gray-200 bg-white shadow-lg text-sm">
                     {loadingStreets ? (
@@ -431,7 +477,7 @@ export default function DashboardPage() {
         {submitting && (
           <section className="bg-white rounded-lg border border-gray-200 p-6">
             <p className="text-sm text-gray-500 animate-pulse">
-              Running neighborhood analysis — this takes about 15 seconds…
+              Running neighborhood analysis — this takes about 20–30 seconds…
             </p>
           </section>
         )}
@@ -445,23 +491,18 @@ export default function DashboardPage() {
                 {analysis.neighborhood} · {analysis.street} · {analysis.zip_code}
               </p>
             </div>
+
+            {/* 8 data cards in 2-column grid, verdict full-width below */}
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-              <div className="rounded-md bg-gray-50 border border-gray-200 p-4">
-                <p className="text-xs font-semibold uppercase tracking-wide text-gray-400 mb-2">311 Service Requests</p>
-                <p className="text-sm text-gray-700 leading-relaxed">{analysis.requests_311}</p>
-              </div>
-              <div className="rounded-md bg-gray-50 border border-gray-200 p-4">
-                <p className="text-xs font-semibold uppercase tracking-wide text-gray-400 mb-2">Crime & Safety</p>
-                <p className="text-sm text-gray-700 leading-relaxed">{analysis.crime_safety}</p>
-              </div>
-              <div className="rounded-md bg-gray-50 border border-gray-200 p-4">
-                <p className="text-xs font-semibold uppercase tracking-wide text-gray-400 mb-2">Property Mix</p>
-                <p className="text-sm text-gray-700 leading-relaxed">{analysis.property_mix}</p>
-              </div>
-              <div className="rounded-md bg-blue-50 border border-blue-200 p-4">
-                <p className="text-xs font-semibold uppercase tracking-wide text-blue-400 mb-2">Overall Verdict</p>
-                <p className="text-sm text-blue-900 leading-relaxed font-medium">{analysis.overall_verdict}</p>
-              </div>
+              <AnalysisCard label="311 Service Requests"  content={analysis.requests_311} />
+              <AnalysisCard label="Crime & Safety"        content={analysis.crime_safety} />
+              <AnalysisCard label="Property Mix"          content={analysis.property_mix} />
+              <AnalysisCard label="Building Permits"      content={analysis.permit_activity} />
+              <AnalysisCard label="Entertainment Scene"   content={analysis.entertainment_scene} />
+              <AnalysisCard label="Traffic Safety"        content={analysis.traffic_safety} />
+              <AnalysisCard label="Gun Violence"          content={analysis.gun_violence} />
+              <AnalysisCard label="Green Space"           content={analysis.green_space} />
+              <AnalysisCard label="Overall Verdict"       content={analysis.overall_verdict} variant="verdict" />
             </div>
           </section>
         )}
@@ -476,13 +517,19 @@ export default function DashboardPage() {
           ) : (
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               {searches.map((s) => (
-                <div key={s.id} className="bg-white rounded-lg border border-gray-200 p-4 flex items-start justify-between">
+                <div
+                  key={s.id}
+                  className="bg-white rounded-lg border border-gray-200 p-4 flex items-start justify-between"
+                >
                   <div>
                     <p className="font-medium text-gray-900">{s.neighborhood}</p>
                     <p className="text-sm text-gray-600">{s.street}</p>
                     <p className="text-sm text-gray-600">{s.zip_code}</p>
                   </div>
-                  <button onClick={() => handleDelete(s.id)} className="text-sm font-medium text-red-600 hover:text-red-800">
+                  <button
+                    onClick={() => handleDelete(s.id)}
+                    className="text-sm font-medium text-red-600 hover:text-red-800"
+                  >
                     Delete
                   </button>
                 </div>
