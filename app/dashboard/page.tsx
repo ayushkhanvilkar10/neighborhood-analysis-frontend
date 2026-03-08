@@ -90,21 +90,13 @@ const NEIGHBORHOOD_ZIP_CODES: Record<string, string[]> = {
   "West Roxbury":                                   ["02132"],
 };
 
-const BOSTON_API   = "https://data.boston.gov/api/3/action/datastore_search_sql";
+const BOSTON_API    = "https://data.boston.gov/api/3/action/datastore_search_sql";
 const CRIME_DATASET = "b973d8cb-eeb2-4e7e-99da-c92938efc9c0";
 
 // ─────────────────────────────────────────────
 // Types
 // ─────────────────────────────────────────────
-interface Search {
-  id:           string;
-  neighborhood: string;
-  street:       string;
-  zip_code:     string;
-  created_at:   string;
-}
-
-interface Analysis {
+interface AnalysisData {
   requests_311:        string;
   crime_safety:        string;
   property_mix:        string;
@@ -114,9 +106,22 @@ interface Analysis {
   gun_violence:        string;
   green_space:         string;
   overall_verdict:     string;
-  neighborhood:        string;
-  street:              string;
-  zip_code:            string;
+}
+
+interface Search {
+  id:           string;
+  neighborhood: string;
+  street:       string;
+  zip_code:     string;
+  created_at:   string;
+  analysis:     AnalysisData | null;
+}
+
+interface SelectedAnalysis {
+  data:         AnalysisData;
+  neighborhood: string;
+  street:       string;
+  zip_code:     string;
 }
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL;
@@ -165,9 +170,11 @@ function AnalysisCard({
 // ─────────────────────────────────────────────
 export default function DashboardPage() {
   const router = useRouter();
-  const [session, setSession]               = useState<Session | null>(null);
-  const [searches, setSearches]             = useState<Search[]>([]);
+  const [session, setSession]                 = useState<Session | null>(null);
+  const [searches, setSearches]               = useState<Search[]>([]);
   const [loadingSearches, setLoadingSearches] = useState(true);
+  const [selectedSearchId, setSelectedSearchId] = useState<string | null>(null);
+  const [selectedAnalysis, setSelectedAnalysis] = useState<SelectedAnalysis | null>(null);
 
   // Neighborhood combobox
   const [neighborhoodInput, setNeighborhoodInput] = useState("");
@@ -176,17 +183,16 @@ export default function DashboardPage() {
   const neighborhoodRef = useRef<HTMLDivElement>(null);
 
   // Street combobox
-  const [streetInput, setStreetInput]           = useState("");
-  const [street, setStreet]                     = useState("");
+  const [streetInput, setStreetInput]             = useState("");
+  const [street, setStreet]                       = useState("");
   const [streetSuggestions, setStreetSuggestions] = useState<string[]>([]);
-  const [loadingStreets, setLoadingStreets]     = useState(false);
+  const [loadingStreets, setLoadingStreets]       = useState(false);
   const [showStreetDropdown, setShowStreetDropdown] = useState(false);
   const streetRef = useRef<HTMLDivElement>(null);
 
   const [zipCode, setZipCode]     = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
-  const [analysis, setAnalysis]   = useState<Analysis | null>(null);
 
   // Auto-populate zip when neighborhood has only one option
   useEffect(() => {
@@ -248,22 +254,52 @@ export default function DashboardPage() {
       )
     : NEIGHBORHOODS;
 
+  // Auto-select the most recent search with analysis on load
+  function autoSelectMostRecent(list: Search[]) {
+    const first = list.find((s) => s.analysis !== null);
+    if (first) {
+      setSelectedSearchId(first.id);
+      setSelectedAnalysis({
+        data:         first.analysis!,
+        neighborhood: first.neighborhood,
+        street:       first.street,
+        zip_code:     first.zip_code,
+      });
+    }
+  }
+
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (!session) { router.replace("/login"); return; }
       setSession(session);
-      fetchSearches(session);
+      fetchSearches(session, true);
     });
   }, [router]);
 
-  async function fetchSearches(s: Session) {
+  async function fetchSearches(s: Session, autoSelect = false) {
     setLoadingSearches(true);
     try {
       const res = await fetch(`${API_URL}/searches`, { headers: authHeaders(s) });
       if (!res.ok) throw new Error();
-      setSearches(await res.json());
+      const list: Search[] = await res.json();
+      setSearches(list);
+      if (autoSelect) autoSelectMostRecent(list);
     } catch { setSearches([]); }
     finally { setLoadingSearches(false); }
+  }
+
+  function handleCardClick(s: Search) {
+    setSelectedSearchId(s.id);
+    if (s.analysis) {
+      setSelectedAnalysis({
+        data:         s.analysis,
+        neighborhood: s.neighborhood,
+        street:       s.street,
+        zip_code:     s.zip_code,
+      });
+    } else {
+      setSelectedAnalysis(null);
+    }
   }
 
   async function handleSubmit(e: React.FormEvent) {
@@ -272,8 +308,12 @@ export default function DashboardPage() {
     if (!neighborhood) { setFormError("Please select a neighborhood from the list."); return; }
     if (!street)       { setFormError("Please select a street from the suggestions."); return; }
     setFormError(null);
-    setAnalysis(null);
+
+    // Clear analysis panel while agent runs
+    setSelectedAnalysis(null);
+    setSelectedSearchId(null);
     setSubmitting(true);
+
     try {
       const res = await fetch(`${API_URL}/searches`, {
         method: "POST",
@@ -284,28 +324,19 @@ export default function DashboardPage() {
         const body = await res.json().catch(() => null);
         throw new Error(body?.detail ?? "Failed to save search");
       }
-      const data = await res.json();
-      setAnalysis({
-        requests_311:        data.requests_311,
-        crime_safety:        data.crime_safety,
-        property_mix:        data.property_mix,
-        permit_activity:     data.permit_activity,
-        entertainment_scene: data.entertainment_scene,
-        traffic_safety:      data.traffic_safety,
-        gun_violence:        data.gun_violence,
-        green_space:         data.green_space,
-        overall_verdict:     data.overall_verdict,
-        neighborhood:        data.neighborhood,
-        street:              data.street,
-        zip_code:            data.zip_code,
-      });
+
+      // Reset form
       setNeighborhoodInput(""); setNeighborhood("");
       setStreetInput("");       setStreet("");
       setZipCode("");
-      await fetchSearches(session);
+
+      // Refresh list — auto-select the newest (index 0 after DESC sort)
+      await fetchSearches(session, true);
     } catch (err: unknown) {
       setFormError(err instanceof Error ? err.message : "Something went wrong");
-    } finally { setSubmitting(false); }
+    } finally {
+      setSubmitting(false);
+    }
   }
 
   async function handleDelete(id: string) {
@@ -315,8 +346,23 @@ export default function DashboardPage() {
         method: "DELETE", headers: authHeaders(session),
       });
       if (!res.ok) throw new Error();
-      setSearches((prev) => prev.filter((s) => s.id !== id));
-      setAnalysis(null);
+      const updated = searches.filter((s) => s.id !== id);
+      setSearches(updated);
+      // If the deleted card was selected, auto-select next most recent
+      if (selectedSearchId === id) {
+        setSelectedAnalysis(null);
+        setSelectedSearchId(null);
+        const next = updated.find((s) => s.analysis !== null);
+        if (next) {
+          setSelectedSearchId(next.id);
+          setSelectedAnalysis({
+            data:         next.analysis!,
+            neighborhood: next.neighborhood,
+            street:       next.street,
+            zip_code:     next.zip_code,
+          });
+        }
+      }
     } catch { /* silently ignore */ }
   }
 
@@ -483,26 +529,24 @@ export default function DashboardPage() {
         )}
 
         {/* Analysis Report */}
-        {analysis && !submitting && (
+        {selectedAnalysis && !submitting && (
           <section className="bg-white rounded-lg border border-gray-200 p-6 space-y-6">
             <div>
               <h2 className="text-lg font-semibold text-gray-900">Analysis Report</h2>
               <p className="text-sm text-gray-500 mt-1">
-                {analysis.neighborhood} · {analysis.street} · {analysis.zip_code}
+                {selectedAnalysis.neighborhood} · {selectedAnalysis.street} · {selectedAnalysis.zip_code}
               </p>
             </div>
-
-            {/* 8 data cards in 2-column grid, verdict full-width below */}
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-              <AnalysisCard label="311 Service Requests"  content={analysis.requests_311} />
-              <AnalysisCard label="Crime & Safety"        content={analysis.crime_safety} />
-              <AnalysisCard label="Property Mix"          content={analysis.property_mix} />
-              <AnalysisCard label="Building Permits"      content={analysis.permit_activity} />
-              <AnalysisCard label="Entertainment Scene"   content={analysis.entertainment_scene} />
-              <AnalysisCard label="Traffic Safety"        content={analysis.traffic_safety} />
-              <AnalysisCard label="Gun Violence"          content={analysis.gun_violence} />
-              <AnalysisCard label="Green Space"           content={analysis.green_space} />
-              <AnalysisCard label="Overall Verdict"       content={analysis.overall_verdict} variant="verdict" />
+              <AnalysisCard label="311 Service Requests"  content={selectedAnalysis.data.requests_311} />
+              <AnalysisCard label="Crime & Safety"        content={selectedAnalysis.data.crime_safety} />
+              <AnalysisCard label="Property Mix"          content={selectedAnalysis.data.property_mix} />
+              <AnalysisCard label="Building Permits"      content={selectedAnalysis.data.permit_activity} />
+              <AnalysisCard label="Entertainment Scene"   content={selectedAnalysis.data.entertainment_scene} />
+              <AnalysisCard label="Traffic Safety"        content={selectedAnalysis.data.traffic_safety} />
+              <AnalysisCard label="Gun Violence"          content={selectedAnalysis.data.gun_violence} />
+              <AnalysisCard label="Green Space"           content={selectedAnalysis.data.green_space} />
+              <AnalysisCard label="Overall Verdict"       content={selectedAnalysis.data.overall_verdict} variant="verdict" />
             </div>
           </section>
         )}
@@ -519,15 +563,23 @@ export default function DashboardPage() {
               {searches.map((s) => (
                 <div
                   key={s.id}
-                  className="bg-white rounded-lg border border-gray-200 p-4 flex items-start justify-between"
+                  onClick={() => handleCardClick(s)}
+                  className={`rounded-lg border p-4 flex items-start justify-between cursor-pointer transition-colors ${
+                    selectedSearchId === s.id
+                      ? "bg-blue-50 border-blue-300"
+                      : "bg-white border-gray-200 hover:bg-gray-50"
+                  }`}
                 >
                   <div>
                     <p className="font-medium text-gray-900">{s.neighborhood}</p>
                     <p className="text-sm text-gray-600">{s.street}</p>
                     <p className="text-sm text-gray-600">{s.zip_code}</p>
+                    {!s.analysis && (
+                      <p className="text-xs text-gray-400 mt-1">No analysis available</p>
+                    )}
                   </div>
                   <button
-                    onClick={() => handleDelete(s.id)}
+                    onClick={(e) => { e.stopPropagation(); handleDelete(s.id); }}
                     className="text-sm font-medium text-red-600 hover:text-red-800"
                   >
                     Delete
