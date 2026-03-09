@@ -37,6 +37,29 @@ const NEIGHBORHOODS: { label: string; value: string }[] = [
 ];
 
 // ─────────────────────────────────────────────
+// Household type options (dropdown)
+// ─────────────────────────────────────────────
+const HOUSEHOLD_TYPES: { label: string; value: string }[] = [
+  { label: "Living solo",           value: "single" },
+  { label: "Couple / Partner",      value: "partner" },
+  { label: "Family with kids",      value: "family" },
+  { label: "Retiree / Empty nester", value: "retiree" },
+  { label: "Investor",              value: "investor" },
+];
+
+// ─────────────────────────────────────────────
+// Property preference options (badge selector, max 2)
+// ─────────────────────────────────────────────
+const PROPERTY_TYPES: string[] = [
+  "Condo",
+  "Single Family",
+  "Multi-Family",
+  "Townhouse",
+  "New Construction",
+  "Fixer-Upper",
+];
+
+// ─────────────────────────────────────────────
 // Neighborhood → BPD District mapping
 // ─────────────────────────────────────────────
 const NEIGHBORHOOD_TO_DISTRICT: Record<string, string> = {
@@ -190,9 +213,22 @@ export default function DashboardPage() {
   const [showStreetDropdown, setShowStreetDropdown] = useState(false);
   const streetRef = useRef<HTMLDivElement>(null);
 
-  const [zipCode, setZipCode]     = useState("");
-  const [submitting, setSubmitting] = useState(false);
-  const [formError, setFormError] = useState<string | null>(null);
+  const [zipCode, setZipCode]         = useState("");
+  const [householdType, setHouseholdType] = useState("");
+  const [propertyPrefs, setPropertyPrefs] = useState<string[]>([]);
+  const [submitting, setSubmitting]   = useState(false);
+  const [formError, setFormError]     = useState<string | null>(null);
+
+  // Toggle a property preference badge (max 2)
+  function togglePropertyPref(p: string) {
+    setPropertyPrefs((prev) =>
+      prev.includes(p)
+        ? prev.filter((x) => x !== p)
+        : prev.length < 2
+        ? [...prev, p]
+        : prev
+    );
+  }
 
   // Auto-populate zip when neighborhood has only one option
   useEffect(() => {
@@ -318,7 +354,13 @@ export default function DashboardPage() {
       const res = await fetch(`${API_URL}/searches`, {
         method: "POST",
         headers: authHeaders(session),
-        body: JSON.stringify({ neighborhood, street, zip_code: zipCode }),
+        body: JSON.stringify({
+          neighborhood,
+          street,
+          zip_code: zipCode,
+          ...(householdType && { household_type: householdType }),
+          ...(propertyPrefs.length > 0 && { property_preferences: propertyPrefs }),
+        }),
       });
       if (!res.ok) {
         const body = await res.json().catch(() => null);
@@ -329,6 +371,8 @@ export default function DashboardPage() {
       setNeighborhoodInput(""); setNeighborhood("");
       setStreetInput("");       setStreet("");
       setZipCode("");
+      setHouseholdType("");
+      setPropertyPrefs([]);
 
       // Refresh list — auto-select the newest (index 0 after DESC sort)
       await fetchSearches(session, true);
@@ -400,6 +444,8 @@ export default function DashboardPage() {
         <section className="bg-white rounded-lg border border-gray-200 p-6">
           <h2 className="text-lg font-semibold text-gray-900 mb-4">Add a Search</h2>
           <form onSubmit={handleSubmit} className="space-y-4">
+
+            {/* Row 1 — Location */}
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
 
               {/* Neighborhood combobox */}
@@ -504,6 +550,59 @@ export default function DashboardPage() {
                     <option key={zip} value={zip}>{zip}</option>
                   ))}
                 </select>
+              </div>
+            </div>
+
+            {/* Row 2 — Buyer profile */}
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+
+              {/* Household type dropdown */}
+              <div>
+                <label htmlFor="householdType" className="block text-sm font-medium text-gray-700">
+                  Household Type <span className="text-gray-400 font-normal">(optional)</span>
+                </label>
+                <select
+                  id="householdType"
+                  value={householdType}
+                  onChange={(e) => setHouseholdType(e.target.value)}
+                  className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                >
+                  <option value="">Select household type…</option>
+                  {HOUSEHOLD_TYPES.map((h) => (
+                    <option key={h.value} value={h.value}>{h.label}</option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Property preferences badges */}
+              <div>
+                <p className="block text-sm font-medium text-gray-700">
+                  Property Preferences{" "}
+                  <span className="text-gray-400 font-normal">(optional · pick up to 2)</span>
+                </p>
+                <div className="mt-2 flex flex-wrap gap-2">
+                  {PROPERTY_TYPES.map((p) => {
+                    const selected = propertyPrefs.includes(p);
+                    const disabled = !selected && propertyPrefs.length >= 2;
+                    return (
+                      <button
+                        key={p}
+                        type="button"
+                        disabled={disabled}
+                        onClick={() => togglePropertyPref(p)}
+                        className={`rounded-full px-3 py-1 text-xs font-medium border transition-colors ${
+                          selected
+                            ? "bg-blue-600 border-blue-600 text-white"
+                            : disabled
+                            ? "bg-gray-50 border-gray-200 text-gray-300 cursor-not-allowed"
+                            : "bg-white border-gray-300 text-gray-600 hover:border-blue-400 hover:text-blue-600"
+                        }`}
+                      >
+                        {p}
+                      </button>
+                    );
+                  })}
+                </div>
               </div>
             </div>
 
