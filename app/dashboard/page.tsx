@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { supabase } from "@/lib/supabase";
 import type { Session } from "@supabase/supabase-js";
 
@@ -428,7 +429,23 @@ export default function DashboardPage() {
       {/* Navbar */}
       <nav className="bg-white border-b border-gray-200">
         <div className="mx-auto max-w-4xl flex items-center justify-between px-4 py-3">
-          <span className="text-lg font-semibold text-gray-900">Neighborhood Analysis</span>
+          <div className="flex items-center gap-6">
+            <span className="text-lg font-semibold text-gray-900">Neighborhood Analysis</span>
+            <div className="flex items-center gap-4">
+              <Link
+                href="/dashboard"
+                className="text-sm font-medium text-blue-600 border-b-2 border-blue-600 pb-0.5"
+              >
+                Analysis
+              </Link>
+              <Link
+                href="/chat"
+                className="text-sm font-medium text-gray-500 hover:text-gray-900"
+              >
+                Chat
+              </Link>
+            </div>
+          </div>
           <button
             onClick={handleSignOut}
             className="text-sm font-medium text-gray-600 hover:text-gray-900"
