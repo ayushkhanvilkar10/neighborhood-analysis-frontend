@@ -5,6 +5,9 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase";
 import type { Session } from "@supabase/supabase-js";
+import CardStatPropertyMix from "@/components/stat-cards-02";
+import CardStat311 from "@/components/stat-cards-03";
+import Stats03 from "@/components/stats-03";
 
 // ─────────────────────────────────────────────
 // Neighborhood options
@@ -54,10 +57,10 @@ const HOUSEHOLD_TYPES: { label: string; value: string }[] = [
 const PROPERTY_TYPES: string[] = [
   "Condo",
   "Single Family",
-  "Multi-Family",
-  "Townhouse",
-  "New Construction",
-  "Fixer-Upper",
+  "Two / Three Family",
+  "Small Apartment",
+  "Mid-Size Apartment",
+  "Mixed Use",
 ];
 
 // ─────────────────────────────────────────────
@@ -120,6 +123,12 @@ const CRIME_DATASET = "b973d8cb-eeb2-4e7e-99da-c92938efc9c0";
 // ─────────────────────────────────────────────
 // Types
 // ─────────────────────────────────────────────
+interface RawStatEntry {
+  section: string;
+  data:    Record<string, number> | { type?: string; offense?: string; count: number }[];
+  total?:  number;
+}
+
 interface AnalysisData {
   requests_311:        string;
   crime_safety:        string;
@@ -130,6 +139,7 @@ interface AnalysisData {
   gun_violence:        string;
   green_space:         string;
   overall_verdict:     string;
+  raw_stats:           RawStatEntry[];
 }
 
 interface Search {
@@ -653,6 +663,46 @@ export default function DashboardPage() {
                 {selectedAnalysis.neighborhood} · {selectedAnalysis.street} · {selectedAnalysis.zip_code}
               </p>
             </div>
+
+            {(() => {
+              const crimeStat = selectedAnalysis.data.raw_stats?.find(
+                (s) => s.section === "crime_safety"
+              );
+              if (!crimeStat || !Array.isArray(crimeStat.data)) return null;
+              return (
+                <Stats03
+                  data={crimeStat.data as { offense: string; count: number }[]}
+                />
+              );
+            })()}
+
+            <div className="flex flex-col md:flex-row gap-4">
+              {(() => {
+                const statsProp = selectedAnalysis.data.raw_stats?.find(
+                  (s) => s.section === "property_mix"
+                );
+                if (!statsProp || Array.isArray(statsProp.data)) return null;
+                return (
+                  <CardStatPropertyMix
+                    data={statsProp.data as Record<string, number>}
+                    total={statsProp.total ?? 0}
+                  />
+                );
+              })()}
+              {(() => {
+                const stats311 = selectedAnalysis.data.raw_stats?.find(
+                  (s) => s.section === "requests_311"
+                );
+                if (!stats311 || !Array.isArray(stats311.data)) return null;
+                return (
+                  <CardStat311
+                    data={stats311.data as { type: string; count: number }[]}
+                    total={stats311.total ?? 0}
+                  />
+                );
+              })()}
+            </div>
+
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <AnalysisCard label="311 Service Requests"  content={selectedAnalysis.data.requests_311} />
               <AnalysisCard label="Crime & Safety"        content={selectedAnalysis.data.crime_safety} />
