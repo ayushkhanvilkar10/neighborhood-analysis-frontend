@@ -3,18 +3,18 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
+import UniqueForm from "@/components/ui/creat-account-form";
+import { BlurImageCard } from "@/components/blur-image-card";
+import { BGPattern } from "@/components/ui/bg-pattern";
 
 export default function LoginPage() {
   const router = useRouter();
   const [isSignUp, setIsSignUp] = useState(false);
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
+  async function handleSubmit(email: string, password: string) {
     setError(null);
     setSuccess(null);
     setLoading(true);
@@ -38,73 +38,39 @@ export default function LoginPage() {
     setLoading(false);
   }
 
+  function handleToggleMode() {
+    setIsSignUp((prev) => !prev);
+    setError(null);
+    setSuccess(null);
+  }
+
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
-      <div className="w-full max-w-sm space-y-6">
-        <h1 className="text-2xl font-semibold text-center text-gray-900">
-          {isSignUp ? "Create an account" : "Sign in to your account"}
-        </h1>
+    <div className="flex min-h-screen">
+      <div className="w-[55%] relative flex flex-col items-center justify-center gap-8">
+        <BGPattern variant="grid" mask="fade-edges" />
+        <h1 className="text-5xl font-bold text-gray-800">Find Your Perfect Neighborhood</h1>
+        <div className="grid grid-cols-3 gap-4">
+          <BlurImageCard src="/images/neighborhoods/north-end.png" alt="North End" title="Boston" subtitle="North End" />
+          <BlurImageCard src="/images/neighborhoods/allston.png" alt="Allston" title="Boston" subtitle="Allston" />
+          <BlurImageCard src="/images/neighborhoods/fenway-park.png" alt="Fenway Park" title="Boston" subtitle="Fenway Park" />
+          <BlurImageCard src="/images/neighborhoods/charlestown.png" alt="Charlestown" title="Boston" subtitle="Charlestown" />
+          <BlurImageCard src="/images/neighborhoods/beacon-hill.png" alt="Beacon Hill" title="Boston" subtitle="Beacon Hill" />
+          <BlurImageCard src="/images/neighborhoods/back-bay.png" alt="Back Bay" title="Boston" subtitle="Back Bay" />
+          <BlurImageCard src="/images/neighborhoods/seaport.png" alt="Seaport" title="Boston" subtitle="Seaport" />
+          <BlurImageCard src="/images/neighborhoods/chinatown.png" alt="Chinatown" title="Boston" subtitle="Chinatown" />
+          <BlurImageCard src="/images/neighborhoods/huntington-ave.png" alt="Huntington Ave" title="Boston" subtitle="Huntington Ave" />
+        </div>
+      </div>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <label htmlFor="email" className="block text-sm font-medium text-gray-700">
-              Email
-            </label>
-            <input
-              id="email"
-              type="email"
-              required
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
-            />
-          </div>
-
-          <div>
-            <label htmlFor="password" className="block text-sm font-medium text-gray-700">
-              Password
-            </label>
-            <input
-              id="password"
-              type="password"
-              required
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
-            />
-          </div>
-
-          {error && (
-            <p className="text-sm text-red-600">{error}</p>
-          )}
-
-          {success && (
-            <p className="text-sm text-green-600">{success}</p>
-          )}
-
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50"
-          >
-            {loading ? "Loading…" : isSignUp ? "Sign Up" : "Sign In"}
-          </button>
-        </form>
-
-        <p className="text-center text-sm text-gray-600">
-          {isSignUp ? "Already have an account?" : "Don't have an account?"}{" "}
-          <button
-            type="button"
-            onClick={() => {
-              setIsSignUp(!isSignUp);
-              setError(null);
-              setSuccess(null);
-            }}
-            className="font-medium text-blue-600 hover:text-blue-500"
-          >
-            {isSignUp ? "Sign In" : "Sign Up"}
-          </button>
-        </p>
+      <div className="w-[45%] flex items-center justify-center p-8">
+        <UniqueForm
+          mode={isSignUp ? "signup" : "signin"}
+          onSubmit={handleSubmit}
+          onToggleMode={handleToggleMode}
+          error={error}
+          success={success}
+          loading={loading}
+        />
       </div>
     </div>
   );
