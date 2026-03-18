@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase";
 import type { Session } from "@supabase/supabase-js";
+import ReactMarkdown from "react-markdown";
 
 // ─────────────────────────────────────────────
 // Types
@@ -383,9 +384,27 @@ export default function ChatPage() {
                           : "bg-white border border-gray-200 text-gray-800 rounded-bl-sm"
                       }`}
                     >
-                      {msg.content}
-                      {msg.id === "streaming" && (
-                        <span className="inline-block w-1.5 h-3.5 ml-0.5 bg-gray-400 animate-pulse rounded-sm align-middle" />
+                      {msg.role === "human" ? (
+                        msg.content
+                      ) : (
+                        <div className="space-y-2">
+                          <ReactMarkdown
+                            components={{
+                              p:      ({ children }) => <p className="text-sm leading-relaxed">{children}</p>,
+                              strong: ({ children }) => <strong className="font-semibold">{children}</strong>,
+                              ul:     ({ children }) => <ul className="list-disc list-outside ml-4 space-y-0.5 text-sm">{children}</ul>,
+                              ol:     ({ children }) => <ol className="list-decimal list-outside ml-4 space-y-0.5 text-sm">{children}</ol>,
+                              li:     ({ children }) => <li className="leading-relaxed">{children}</li>,
+                              h1:     ({ children }) => <h1 className="text-base font-semibold mt-3 mb-1">{children}</h1>,
+                              h2:     ({ children }) => <h2 className="text-sm font-semibold mt-3 mb-1">{children}</h2>,
+                              h3:     ({ children }) => <h3 className="text-sm font-medium mt-2 mb-1">{children}</h3>,
+                              code:   ({ children }) => <code className="bg-gray-100 text-gray-800 rounded px-1 py-0.5 text-xs font-mono">{children}</code>,
+                            }}
+                          >{msg.content}</ReactMarkdown>
+                          {msg.id === "streaming" && (
+                            <span className="inline-block w-1.5 h-3.5 ml-0.5 bg-gray-400 animate-pulse rounded-sm align-middle" />
+                          )}
+                        </div>
                       )}
                     </div>
                   </div>

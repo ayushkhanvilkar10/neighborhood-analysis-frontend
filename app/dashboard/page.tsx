@@ -8,6 +8,35 @@ import type { Session } from "@supabase/supabase-js";
 import CardStatPropertyMix from "@/components/stat-cards-02";
 import CardStat311 from "@/components/stat-cards-03";
 import Stats03 from "@/components/stats-03";
+import Map, { NavigationControl } from "react-map-gl/mapbox";
+import "mapbox-gl/dist/mapbox-gl.css";
+
+const MAPBOX_TOKEN = process.env.NEXT_PUBLIC_MAPBOX_TOKEN!;
+const BOSTON_CENTER = { longitude: -71.0589, latitude: 42.3601, zoom: 12 };
+
+const NEIGHBORHOOD_COORDINATES: Record<string, { latitude: number; longitude: number; zoom: number }> = {
+  "Allston":                                        { latitude: 42.3539, longitude: -71.1337, zoom: 14 },
+  "Allston / Brighton":                             { latitude: 42.3517, longitude: -71.1500, zoom: 13.5 },
+  "Back Bay":                                       { latitude: 42.3503, longitude: -71.0810, zoom: 14.5 },
+  "Beacon Hill":                                    { latitude: 42.3588, longitude: -71.0707, zoom: 15 },
+  "Brighton":                                       { latitude: 42.3464, longitude: -71.1627, zoom: 14 },
+  "Charlestown":                                    { latitude: 42.3782, longitude: -71.0602, zoom: 14.5 },
+  "Dorchester":                                     { latitude: 42.3016, longitude: -71.0674, zoom: 13 },
+  "Downtown / Financial District":                  { latitude: 42.3555, longitude: -71.0565, zoom: 15 },
+  "East Boston":                                    { latitude: 42.3702, longitude: -71.0389, zoom: 14 },
+  "Fenway / Kenmore / Audubon Circle / Longwood":   { latitude: 42.3429, longitude: -71.1003, zoom: 14 },
+  "Greater Mattapan":                               { latitude: 42.2677, longitude: -71.0934, zoom: 14 },
+  "Hyde Park":                                      { latitude: 42.2565, longitude: -71.1245, zoom: 13.5 },
+  "Jamaica Plain":                                  { latitude: 42.3098, longitude: -71.1144, zoom: 14 },
+  "Mattapan":                                       { latitude: 42.2770, longitude: -71.0912, zoom: 14 },
+  "Mission Hill":                                   { latitude: 42.3297, longitude: -71.1060, zoom: 15 },
+  "Roslindale":                                     { latitude: 42.2837, longitude: -71.1270, zoom: 14 },
+  "Roxbury":                                        { latitude: 42.3152, longitude: -71.0886, zoom: 14 },
+  "South Boston":                                   { latitude: 42.3381, longitude: -71.0476, zoom: 14 },
+  "South Boston / South Boston Waterfront":         { latitude: 42.3420, longitude: -71.0400, zoom: 13.5 },
+  "South End":                                      { latitude: 42.3424, longitude: -71.0713, zoom: 15 },
+  "West Roxbury":                                   { latitude: 42.2798, longitude: -71.1581, zoom: 13.5 },
+};
 
 // ─────────────────────────────────────────────
 // Neighborhood options
@@ -229,6 +258,14 @@ export default function DashboardPage() {
   const [propertyPrefs, setPropertyPrefs] = useState<string[]>([]);
   const [submitting, setSubmitting]   = useState(false);
   const [formError, setFormError]     = useState<string | null>(null);
+  const [mapOpen, setMapOpen]         = useState(false);
+
+  useEffect(() => {
+    if (!mapOpen) return;
+    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") setMapOpen(false); };
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, [mapOpen]);
 
   // Toggle a property preference badge (max 2)
   function togglePropertyPref(p: string) {
@@ -435,7 +472,8 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <>
+    <div className={`min-h-screen bg-gray-50 transition-[filter] duration-300 ${mapOpen ? "blur-sm pointer-events-none select-none" : ""}`}>
       {/* Navbar */}
       <nav className="bg-white border-b border-gray-200">
         <div className="mx-auto max-w-4xl flex items-center justify-between px-4 py-3">
@@ -676,6 +714,17 @@ export default function DashboardPage() {
               );
             })()}
 
+            <button
+              type="button"
+              onClick={() => setMapOpen(true)}
+              className="inline-flex items-center gap-2 rounded-md bg-gray-900 px-4 py-2 text-sm font-medium text-white hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 transition-colors"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                <path fillRule="evenodd" d="M12 1.586l-4 4v12.828l4-4V1.586zM3.707 3.293A1 1 0 002 4v10a1 1 0 00.293.707L6 18.414V5.586L3.707 3.293zM17.707 5.293L14 1.586v12.828l2.293 2.293A1 1 0 0018 16V6a1 1 0 00-.293-.707z" clipRule="evenodd" />
+              </svg>
+              View Crime Map
+            </button>
+
             <div className="flex flex-col md:flex-row gap-4">
               {(() => {
                 const statsProp = selectedAnalysis.data.raw_stats?.find(
@@ -757,5 +806,49 @@ export default function DashboardPage() {
         </section>
       </main>
     </div>
+
+    {/* Crime Map Modal */}
+    {mapOpen && (
+      <div
+        className="fixed inset-0 z-50 flex items-center justify-center p-4"
+        onClick={() => setMapOpen(false)}
+      >
+        <div className="absolute inset-0 bg-black/40" />
+        <div
+          className="relative w-full max-w-4xl h-[75vh] rounded-xl overflow-hidden shadow-2xl bg-gray-900 animate-in fade-in zoom-in-95 duration-200"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <div className="flex items-center justify-between px-4 py-3 bg-gray-900 border-b border-gray-700">
+            <h3 className="text-sm font-semibold text-white">
+              Crime Map — {selectedAnalysis?.neighborhood ?? "Boston"}
+            </h3>
+            <button
+              onClick={() => setMapOpen(false)}
+              className="rounded-md p-1 text-gray-400 hover:text-white hover:bg-gray-700 transition-colors"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+              </svg>
+            </button>
+          </div>
+          <div className="h-[calc(100%-49px)]">
+            <Map
+              key={selectedAnalysis?.neighborhood ?? "boston"}
+              initialViewState={
+                selectedAnalysis
+                  ? NEIGHBORHOOD_COORDINATES[selectedAnalysis.neighborhood] ?? BOSTON_CENTER
+                  : BOSTON_CENTER
+              }
+              style={{ width: "100%", height: "100%" }}
+              mapStyle="mapbox://styles/mapbox/dark-v11"
+              mapboxAccessToken={MAPBOX_TOKEN}
+            >
+              <NavigationControl position="top-right" />
+            </Map>
+          </div>
+        </div>
+      </div>
+    )}
+    </>
   );
 }
