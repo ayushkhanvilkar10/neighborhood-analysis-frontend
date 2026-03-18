@@ -3,23 +3,26 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
-import UniqueForm from "@/components/ui/creat-account-form";
-
-
+import { SignInPage } from "@/components/ui/sign-in";
 
 export default function LoginPage() {
   const router = useRouter();
-  const [isSignUp, setIsSignUp] = useState(false);
+  const [mode, setMode] = useState<"signin" | "signup">("signin");
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
-  async function handleSubmit(email: string, password: string) {
+  async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
     setError(null);
     setSuccess(null);
     setLoading(true);
 
-    if (isSignUp) {
+    const formData = new FormData(event.currentTarget);
+    const email = formData.get("email") as string;
+    const password = formData.get("password") as string;
+
+    if (mode === "signup") {
       const { error } = await supabase.auth.signUp({ email, password });
       if (error) {
         setError(error.message);
@@ -39,15 +42,16 @@ export default function LoginPage() {
   }
 
   function handleToggleMode() {
-    setIsSignUp((prev) => !prev);
+    setMode((prev) => (prev === "signin" ? "signup" : "signin"));
     setError(null);
     setSuccess(null);
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center">
-      <UniqueForm
-        mode={isSignUp ? "signup" : "signin"}
+    <div className="bg-background text-foreground">
+      <SignInPage
+        heroImageSrc="https://images.unsplash.com/photo-1642615835477-d303d7dc9ee9?w=2160&q=80"
+        mode={mode}
         onSubmit={handleSubmit}
         onToggleMode={handleToggleMode}
         error={error}

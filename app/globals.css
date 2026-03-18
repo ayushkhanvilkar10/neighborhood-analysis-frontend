@@ -113,6 +113,27 @@
     --radius-2xl: calc(var(--radius) * 1.8);
     --radius-3xl: calc(var(--radius) * 2.2);
     --radius-4xl: calc(var(--radius) * 2.6);
+  @keyframes fadeSlideIn {
+  to {
+    opacity: 1;
+    filter: blur(0px);
+    transform: translateY(0px);
+        }
+    }
+  @keyframes slideRightIn {
+  to {
+    opacity: 1;
+    filter: blur(0px);
+    transform: translateX(0px);
+        }
+    }
+  @keyframes testimonialIn {
+  to {
+    opacity: 1;
+    filter: blur(0px);
+    transform: translateY(0px) scale(1);
+        }
+    }
 }
 
 @layer base {
@@ -125,4 +146,28 @@
   html {
     @apply font-sans;
     }
+}
+
+@layer utilities {
+  .animate-element {
+    opacity: 0;
+    filter: blur(4px);
+    transform: translateY(12px);
+    animation: fadeSlideIn 0.6s ease-out forwards;
+  }
+  .animate-slide-right {
+    opacity: 0;
+    filter: blur(4px);
+    transform: translateX(30px);
+    animation: slideRightIn 0.8s ease-out forwards;
+  }
+  .animate-delay-100 { animation-delay: 100ms; }
+  .animate-delay-200 { animation-delay: 200ms; }
+  .animate-delay-300 { animation-delay: 300ms; }
+  .animate-delay-400 { animation-delay: 400ms; }
+  .animate-delay-500 { animation-delay: 500ms; }
+  .animate-delay-600 { animation-delay: 600ms; }
+  .animate-delay-700 { animation-delay: 700ms; }
+  .animate-delay-800 { animation-delay: 800ms; }
+  .animate-delay-900 { animation-delay: 900ms; }
 }
