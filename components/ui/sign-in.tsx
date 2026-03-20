@@ -1,8 +1,9 @@
 "use client";
 
 import React, { useState } from 'react';
+import Image from 'next/image';
 import { Eye, EyeOff } from 'lucide-react';
-
+import { LocationMap } from '@/components/ui/expand-map';
 interface SignInPageProps {
   title?: React.ReactNode;
   description?: React.ReactNode;
@@ -101,7 +102,20 @@ export const SignInPage: React.FC<SignInPageProps> = ({
 
       {heroImageSrc && (
         <section className="hidden md:block flex-1 relative p-4">
-          <div className="animate-slide-right animate-delay-300 absolute inset-4 rounded-3xl bg-cover bg-center" style={{ backgroundImage: `url(${heroImageSrc})` }}></div>
+          <div className="animate-slide-right animate-delay-300 absolute inset-4 rounded-3xl overflow-hidden">
+            <Image
+              src={heroImageSrc}
+              alt=""
+              fill
+              unoptimized
+              className="object-cover object-center"
+              priority
+            />
+            <div className="relative z-10 flex flex-col items-center justify-center h-full gap-8">
+              <p className="text-neutral-600 text-xs font-medium tracking-[0.2em] uppercase">Currently In</p>
+              <LocationMap location="Boston, MA" coordinates="42.3601° N, 71.0589° W" />
+            </div>
+          </div>
         </section>
       )}
     </div>

@@ -10,6 +10,8 @@ import CardStat311 from "@/components/stat-cards-03";
 import Stats03 from "@/components/stats-03";
 import Map, { NavigationControl } from "react-map-gl/mapbox";
 import "mapbox-gl/dist/mapbox-gl.css";
+import { Spinner } from "@/components/ui/spinner";
+import { Skeleton } from "@/components/ui/skeleton";
 
 const MAPBOX_TOKEN = process.env.NEXT_PUBLIC_MAPBOX_TOKEN!;
 const BOSTON_CENTER = { longitude: -71.0589, latitude: 42.3601, zoom: 12 };
@@ -685,10 +687,37 @@ export default function DashboardPage() {
 
         {/* Loading state */}
         {submitting && (
-          <section className="bg-white rounded-lg border border-gray-200 p-6">
-            <p className="text-sm text-gray-500 animate-pulse">
-              Running neighborhood analysis — this takes about 20–30 seconds…
-            </p>
+          <section className="bg-white rounded-lg border border-gray-200 p-6 space-y-6">
+            <div className="flex items-center gap-3">
+              <Spinner />
+              <p className="text-sm text-gray-500">
+                Running neighborhood analysis — this takes about 20–30 seconds…
+              </p>
+            </div>
+
+            {/* Table skeleton */}
+            <div className="space-y-3">
+              <Skeleton className="h-4 w-48" />
+              <div className="space-y-2">
+                <Skeleton className="h-8 w-full" />
+                <Skeleton className="h-8 w-full" />
+                <Skeleton className="h-8 w-full" />
+                <Skeleton className="h-8 w-full" />
+                <Skeleton className="h-8 w-3/4" />
+              </div>
+            </div>
+
+            {/* Text skeleton */}
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              {Array.from({ length: 6 }).map((_, i) => (
+                <div key={i} className="space-y-2 rounded-lg border border-gray-200 p-4">
+                  <Skeleton className="h-4 w-32" />
+                  <Skeleton className="h-3 w-full" />
+                  <Skeleton className="h-3 w-full" />
+                  <Skeleton className="h-3 w-2/3" />
+                </div>
+              ))}
+            </div>
           </section>
         )}
 
@@ -752,7 +781,9 @@ export default function DashboardPage() {
               })()}
             </div>
 
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <AnalysisCard label="Overall Verdict"       content={selectedAnalysis.data.overall_verdict} variant="verdict" />
+
+            <div className="grid grid-cols-1 gap-4">
               <AnalysisCard label="311 Service Requests"  content={selectedAnalysis.data.requests_311} />
               <AnalysisCard label="Crime & Safety"        content={selectedAnalysis.data.crime_safety} />
               <AnalysisCard label="Property Mix"          content={selectedAnalysis.data.property_mix} />
@@ -761,7 +792,6 @@ export default function DashboardPage() {
               <AnalysisCard label="Traffic Safety"        content={selectedAnalysis.data.traffic_safety} />
               <AnalysisCard label="Gun Violence"          content={selectedAnalysis.data.gun_violence} />
               <AnalysisCard label="Green Space"           content={selectedAnalysis.data.green_space} />
-              <AnalysisCard label="Overall Verdict"       content={selectedAnalysis.data.overall_verdict} variant="verdict" />
             </div>
           </section>
         )}

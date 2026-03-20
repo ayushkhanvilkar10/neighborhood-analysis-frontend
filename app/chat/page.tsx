@@ -6,6 +6,7 @@ import Link from "next/link";
 import { supabase } from "@/lib/supabase";
 import type { Session } from "@supabase/supabase-js";
 import ReactMarkdown from "react-markdown";
+import { TextShimmerLoader } from "@/components/ui/loader";
 
 // ─────────────────────────────────────────────
 // Types
@@ -63,8 +64,10 @@ export default function ChatPage() {
   const [sending, setSending]           = useState(false);
 
   // WebSocket ref — persists across renders without causing re-renders
-  const wsRef     = useRef<WebSocket | null>(null);
-  const bottomRef = useRef<HTMLDivElement>(null);
+  const wsRef          = useRef<WebSocket | null>(null);
+  const bottomRef      = useRef<HTMLDivElement>(null);
+  const tokenBufferRef = useRef<string>("");
+  const rafRef         = useRef<number | null>(null);
 
   // ── Auto-scroll to bottom when messages change ──
   useEffect(() => {
@@ -140,49 +143,50 @@ export default function ChatPage() {
       `${WS_BASE}/ws/chat/${sessionId}?token=${s.access_token}`
     );
 
-    // Buffer to accumulate the streaming AI response
-    let streamBuffer = "";
-
     ws.onmessage = (event: MessageEvent) => {
       const token: string = event.data;
 
       if (token === "[DONE]") {
-        // Streaming finished — replace the temporary 'streaming' id
-        // with a stable unique one so the next turn can reuse 'streaming'.
-        setMessages((prev) => prev.map((m) =>
-          m.id === "streaming" ? { ...m, id: `ai-${Date.now()}` } : m
-        ));
-        streamBuffer = "";
+        if (rafRef.current !== null) {
+          cancelAnimationFrame(rafRef.current);
+          rafRef.current = null;
+        }
+        const finalContent = tokenBufferRef.current;
+        tokenBufferRef.current = "";
+        setMessages((prev) => {
+          const last = prev[prev.length - 1];
+          if (last?.id === "streaming") {
+            return [...prev.slice(0, -1), { ...last, id: `ai-${Date.now()}`, content: finalContent }];
+          }
+          return prev;
+        });
         setSending(false);
         return;
       }
 
-      streamBuffer += token;
-      const buffered = streamBuffer;
+      tokenBufferRef.current += token;
 
-      // Update the last message (AI bubble) in place as tokens arrive
-      setMessages((prev) => {
-        const last = prev[prev.length - 1];
-        if (last && last.role === "ai" && last.id === "streaming") {
-          return [
-            ...prev.slice(0, -1),
-            { ...last, content: buffered },
-          ];
-        }
-        // First token — add a new streaming AI bubble
-        return [
-          ...prev,
-          {
-            id:         "streaming",
-            role:       "ai",
-            content:    buffered,
-            created_at: new Date().toISOString(),
-          },
-        ];
-      });
+      if (rafRef.current === null) {
+        rafRef.current = requestAnimationFrame(() => {
+          rafRef.current = null;
+          const buffered = tokenBufferRef.current;
+          setMessages((prev) => {
+            const last = prev[prev.length - 1];
+            if (last?.role === "ai" && last?.id === "streaming") {
+              return [...prev.slice(0, -1), { ...last, content: buffered }];
+            }
+            return [...prev, { id: "streaming", role: "ai", content: buffered, created_at: new Date().toISOString() }];
+          });
+        });
+      }
     };
 
     ws.onclose = () => {
+      if (rafRef.current !== null) {
+        cancelAnimationFrame(rafRef.current);
+        rafRef.current = null;
+      }
+      tokenBufferRef.current = "";
       setSending(false);
     };
 
@@ -386,29 +390,37 @@ export default function ChatPage() {
                     >
                       {msg.role === "human" ? (
                         msg.content
+                      ) : msg.id === "streaming" ? (
+                        <span className="text-sm leading-relaxed whitespace-pre-wrap streaming-text">
+                          {msg.content}
+                          <span className="inline-block w-1.5 h-3.5 ml-0.5 bg-gray-400 animate-pulse rounded-sm align-middle" />
+                        </span>
                       ) : (
-                        <div className="space-y-2">
-                          <ReactMarkdown
-                            components={{
-                              p:      ({ children }) => <p className="text-sm leading-relaxed">{children}</p>,
-                              strong: ({ children }) => <strong className="font-semibold">{children}</strong>,
-                              ul:     ({ children }) => <ul className="list-disc list-outside ml-4 space-y-0.5 text-sm">{children}</ul>,
-                              ol:     ({ children }) => <ol className="list-decimal list-outside ml-4 space-y-0.5 text-sm">{children}</ol>,
-                              li:     ({ children }) => <li className="leading-relaxed">{children}</li>,
-                              h1:     ({ children }) => <h1 className="text-base font-semibold mt-3 mb-1">{children}</h1>,
-                              h2:     ({ children }) => <h2 className="text-sm font-semibold mt-3 mb-1">{children}</h2>,
-                              h3:     ({ children }) => <h3 className="text-sm font-medium mt-2 mb-1">{children}</h3>,
-                              code:   ({ children }) => <code className="bg-gray-100 text-gray-800 rounded px-1 py-0.5 text-xs font-mono">{children}</code>,
-                            }}
-                          >{msg.content}</ReactMarkdown>
-                          {msg.id === "streaming" && (
-                            <span className="inline-block w-1.5 h-3.5 ml-0.5 bg-gray-400 animate-pulse rounded-sm align-middle" />
-                          )}
-                        </div>
+                        <ReactMarkdown
+                          components={{
+                            p:      ({ children }) => <p className="text-sm leading-relaxed">{children}</p>,
+                            strong: ({ children }) => <strong className="font-semibold">{children}</strong>,
+                            ul:     ({ children }) => <ul className="list-disc list-outside ml-4 space-y-0.5 text-sm">{children}</ul>,
+                            ol:     ({ children }) => <ol className="list-decimal list-outside ml-4 space-y-0.5 text-sm">{children}</ol>,
+                            li:     ({ children }) => <li className="leading-relaxed">{children}</li>,
+                            h1:     ({ children }) => <h1 className="text-base font-semibold mt-3 mb-1">{children}</h1>,
+                            h2:     ({ children }) => <h2 className="text-sm font-semibold mt-3 mb-1">{children}</h2>,
+                            h3:     ({ children }) => <h3 className="text-sm font-medium mt-2 mb-1">{children}</h3>,
+                            code:   ({ children }) => <code className="bg-gray-100 text-gray-800 rounded px-1 py-0.5 text-xs font-mono">{children}</code>,
+                          }}
+                        >{msg.content}</ReactMarkdown>
                       )}
                     </div>
                   </div>
                 ))}
+
+                {sending && !messages.some((m) => m.id === "streaming") && (
+                  <div className="flex justify-start">
+                    <div className="max-w-xl rounded-2xl px-4 py-3 bg-white border border-gray-200 rounded-bl-sm">
+                      <TextShimmerLoader text="Thinking..." />
+                    </div>
+                  </div>
+                )}
 
                 <div ref={bottomRef} />
               </div>
