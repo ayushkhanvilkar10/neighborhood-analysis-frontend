@@ -1,6 +1,8 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
+import { Button, Combobox, ComboboxInput, ComboboxOption, ComboboxOptions, Field, Input, Label, Listbox, ListboxButton, ListboxOption, ListboxOptions, Select } from "@headlessui/react";
+import { ChevronDown } from "lucide-react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase";
@@ -12,6 +14,9 @@ import Map, { NavigationControl } from "react-map-gl/mapbox";
 import "mapbox-gl/dist/mapbox-gl.css";
 import { Spinner } from "@/components/ui/spinner";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Button as ShadcnButton } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
+import { LiquidGlassCard } from "@/components/ui/liquid-weather-glass";
 
 const MAPBOX_TOKEN = process.env.NEXT_PUBLIC_MAPBOX_TOKEN!;
 const BOSTON_CENTER = { longitude: -71.0589, latitude: 42.3601, zoom: 12 };
@@ -160,6 +165,11 @@ interface RawStatEntry {
   total?:  number;
 }
 
+interface NeighborhoodTiers {
+  crime:          "High" | "Moderate" | "Low";
+  complaints_311: "High" | "Moderate" | "Low";
+}
+
 interface AnalysisData {
   requests_311:        string;
   crime_safety:        string;
@@ -171,6 +181,7 @@ interface AnalysisData {
   green_space:         string;
   overall_verdict:     string;
   raw_stats:           RawStatEntry[];
+  neighborhood_tiers:  NeighborhoodTiers | null;
 }
 
 interface Search {
@@ -201,31 +212,49 @@ function authHeaders(session: Session) {
 // ─────────────────────────────────────────────
 // Analysis card component
 // ─────────────────────────────────────────────
+function TierBadge({ tier }: { tier: "High" | "Moderate" | "Low" }) {
+  const styles = {
+    High:     "bg-red-100 text-red-700 border-red-200",
+    Moderate: "bg-yellow-100 text-yellow-700 border-yellow-200",
+    Low:      "bg-green-100 text-green-700 border-green-200",
+  }[tier];
+  return (
+    <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium border ${styles}`}>
+      {tier}
+    </span>
+  );
+}
+
 function AnalysisCard({
   label,
   content,
+  tier,
   variant = "default",
 }: {
   label: string;
   content: string;
+  tier?: "High" | "Moderate" | "Low";
   variant?: "default" | "verdict";
 }) {
   if (variant === "verdict") {
     return (
-      <div className="rounded-md bg-blue-50 border border-blue-200 p-4 col-span-1 sm:col-span-2">
-        <p className="text-xs font-semibold uppercase tracking-wide text-blue-400 mb-2">
+      <div className="rounded-xl bg-verdict/40 border border-[#016B51]/20 backdrop-blur-md p-4 col-span-1 sm:col-span-2">
+        <p className="text-xs font-semibold uppercase tracking-wide text-gray-500 mb-2">
           {label}
         </p>
-        <p className="text-sm text-blue-900 leading-relaxed font-medium">{content}</p>
+        <p className="text-sm/6 text-gray-900 font-medium">{content}</p>
       </div>
     );
   }
   return (
-    <div className="rounded-md bg-gray-50 border border-gray-200 p-4">
-      <p className="text-xs font-semibold uppercase tracking-wide text-gray-400 mb-2">
-        {label}
-      </p>
-      <p className="text-sm text-gray-700 leading-relaxed">{content}</p>
+    <div className="rounded-xl bg-white/10 border border-[#016B51]/20 backdrop-blur-md p-4">
+      <div className="flex items-center gap-2 mb-2">
+        <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">
+          {label}
+        </p>
+        {tier && <TierBadge tier={tier} />}
+      </div>
+      <p className="text-sm/6 text-gray-800 leading-relaxed">{content}</p>
     </div>
   );
 }
@@ -241,19 +270,14 @@ export default function DashboardPage() {
   const [selectedSearchId, setSelectedSearchId] = useState<string | null>(null);
   const [selectedAnalysis, setSelectedAnalysis] = useState<SelectedAnalysis | null>(null);
 
-  // Neighborhood combobox
-  const [neighborhoodInput, setNeighborhoodInput] = useState("");
-  const [neighborhood, setNeighborhood]           = useState("");
-  const [showNeighborhoodDropdown, setShowNeighborhoodDropdown] = useState(false);
-  const neighborhoodRef = useRef<HTMLDivElement>(null);
+  // Neighborhood listbox
+  const [neighborhood, setNeighborhood] = useState<{ label: string; value: string } | null>(null);
 
   // Street combobox
   const [streetInput, setStreetInput]             = useState("");
   const [street, setStreet]                       = useState("");
   const [streetSuggestions, setStreetSuggestions] = useState<string[]>([]);
   const [loadingStreets, setLoadingStreets]       = useState(false);
-  const [showStreetDropdown, setShowStreetDropdown] = useState(false);
-  const streetRef = useRef<HTMLDivElement>(null);
 
   const [zipCode, setZipCode]         = useState("");
   const [householdType, setHouseholdType] = useState("");
@@ -282,15 +306,15 @@ export default function DashboardPage() {
 
   // Auto-populate zip when neighborhood has only one option
   useEffect(() => {
-    if (!neighborhood) return;
-    const zips = NEIGHBORHOOD_ZIP_CODES[neighborhood] ?? [];
+    if (!neighborhood?.value) return;
+    const zips = NEIGHBORHOOD_ZIP_CODES[neighborhood.value] ?? [];
     if (zips.length === 1) setZipCode(zips[0]);
     else setZipCode("");
   }, [neighborhood]);
 
   // Debounced street fetch
   useEffect(() => {
-    const district = NEIGHBORHOOD_TO_DISTRICT[neighborhood];
+    const district = neighborhood?.value ? NEIGHBORHOOD_TO_DISTRICT[neighborhood.value] : undefined;
     if (!district || streetInput.trim().length < 2) {
       setStreetSuggestions([]);
       return;
@@ -305,7 +329,6 @@ export default function DashboardPage() {
           .map((r: { STREET: string }) => r.STREET)
           .filter(Boolean);
         setStreetSuggestions(streets);
-        setShowStreetDropdown(streets.length > 0);
       } catch {
         setStreetSuggestions([]);
       } finally {
@@ -315,30 +338,8 @@ export default function DashboardPage() {
     return () => clearTimeout(timer);
   }, [streetInput, neighborhood]);
 
-  // Close dropdowns on outside click
-  useEffect(() => {
-    const handler = (e: MouseEvent) => {
-      if (neighborhoodRef.current && !neighborhoodRef.current.contains(e.target as Node))
-        setShowNeighborhoodDropdown(false);
-    };
-    document.addEventListener("mousedown", handler);
-    return () => document.removeEventListener("mousedown", handler);
-  }, []);
 
-  useEffect(() => {
-    const handler = (e: MouseEvent) => {
-      if (streetRef.current && !streetRef.current.contains(e.target as Node))
-        setShowStreetDropdown(false);
-    };
-    document.addEventListener("mousedown", handler);
-    return () => document.removeEventListener("mousedown", handler);
-  }, []);
 
-  const filteredNeighborhoods = neighborhoodInput.trim()
-    ? NEIGHBORHOODS.filter((n) =>
-        n.label.toLowerCase().includes(neighborhoodInput.toLowerCase())
-      )
-    : NEIGHBORHOODS;
 
   // Auto-select the most recent search with analysis on load
   function autoSelectMostRecent(list: Search[]) {
@@ -391,8 +392,8 @@ export default function DashboardPage() {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!session) return;
-    if (!neighborhood) { setFormError("Please select a neighborhood from the list."); return; }
-    if (!street)       { setFormError("Please select a street from the suggestions."); return; }
+    if (!neighborhood?.value) { setFormError("Please select a neighborhood from the list."); return; }
+    if (!street)               { setFormError("Please select a street from the suggestions."); return; }
     setFormError(null);
 
     // Clear analysis panel while agent runs
@@ -405,7 +406,7 @@ export default function DashboardPage() {
         method: "POST",
         headers: authHeaders(session),
         body: JSON.stringify({
-          neighborhood,
+          neighborhood: neighborhood!.value,
           street,
           zip_code: zipCode,
           ...(householdType && { household_type: householdType }),
@@ -418,7 +419,7 @@ export default function DashboardPage() {
       }
 
       // Reset form
-      setNeighborhoodInput(""); setNeighborhood("");
+      setNeighborhood(null);
       setStreetInput("");       setStreet("");
       setZipCode("");
       setHouseholdType("");
@@ -475,9 +476,18 @@ export default function DashboardPage() {
 
   return (
     <>
-    <div className={`min-h-screen bg-gray-50 transition-[filter] duration-300 ${mapOpen ? "blur-sm pointer-events-none select-none" : ""}`}>
+    <div
+      className={`min-h-screen transition-[filter] duration-300 ${mapOpen ? "blur-sm pointer-events-none select-none" : ""}`}
+      style={{
+        backgroundImage: "url('/images/login-hero.svg')",
+        backgroundSize: "cover",
+        backgroundPosition: "center",
+        backgroundRepeat: "no-repeat",
+        backgroundAttachment: "fixed",
+      }}
+    >
       {/* Navbar */}
-      <nav className="bg-white border-b border-gray-200">
+      <nav className="bg-white/70 backdrop-blur-md border-b border-white/40">
         <div className="mx-auto max-w-4xl flex items-center justify-between px-4 py-3">
           <div className="flex items-center gap-6">
             <span className="text-lg font-semibold text-gray-900">Neighborhood Analysis</span>
@@ -508,290 +518,305 @@ export default function DashboardPage() {
       <main className="mx-auto max-w-4xl px-4 py-8 space-y-8">
 
         {/* Form */}
-        <section className="bg-white rounded-lg border border-gray-200 p-6">
-          <h2 className="text-lg font-semibold text-gray-900 mb-4">Add a Search</h2>
-          <form onSubmit={handleSubmit} className="space-y-4">
+        <section>
+          <div className="w-full rounded-xl bg-verdict/40 border border-[#016B51]/20 backdrop-blur-2xl p-6">
+            <h2 className="text-lg font-semibold text-gray-900 mb-4">Add a Search</h2>
+            <form onSubmit={handleSubmit} className="space-y-4">
 
-            {/* Row 1 — Location */}
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+              {/* Row 1 — Location */}
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
 
-              {/* Neighborhood combobox */}
-              <div className="relative" ref={neighborhoodRef}>
-                <label htmlFor="neighborhood" className="block text-sm font-medium text-gray-700">
-                  Neighborhood
-                </label>
-                <input
-                  id="neighborhood"
-                  type="text"
-                  autoComplete="off"
-                  required
-                  placeholder="e.g. Back Bay"
-                  value={neighborhoodInput}
-                  onChange={(e) => {
-                    setNeighborhoodInput(e.target.value);
-                    setNeighborhood("");
+                {/* Neighborhood listbox */}
+                <Listbox
+                  value={neighborhood}
+                  onChange={(n) => {
+                    setNeighborhood(n);
                     setStreetInput(""); setStreet("");
-                    setShowNeighborhoodDropdown(true);
                   }}
-                  onFocus={() => setShowNeighborhoodDropdown(true)}
-                  className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
-                />
-                {showNeighborhoodDropdown && filteredNeighborhoods.length > 0 && (
-                  <ul className="absolute z-10 mt-1 w-full max-h-56 overflow-auto rounded-md border border-gray-200 bg-white shadow-lg text-sm">
-                    {filteredNeighborhoods.map((n) => (
-                      <li
-                        key={n.label}
-                        onMouseDown={() => {
-                          setNeighborhoodInput(n.label);
-                          setNeighborhood(n.value);
-                          setShowNeighborhoodDropdown(false);
-                        }}
-                        className="cursor-pointer px-3 py-2 hover:bg-blue-50 hover:text-blue-700"
-                      >
-                        {n.label}
-                      </li>
-                    ))}
-                  </ul>
-                )}
-              </div>
-
-              {/* Street combobox */}
-              <div className="relative" ref={streetRef}>
-                <label htmlFor="street" className="block text-sm font-medium text-gray-700">
-                  Street
-                </label>
-                <input
-                  id="street"
-                  type="text"
-                  autoComplete="off"
-                  required
-                  disabled={!neighborhood}
-                  placeholder={neighborhood ? "Type to search…" : "Select neighborhood first"}
-                  value={streetInput}
-                  onChange={(e) => {
-                    setStreetInput(e.target.value);
-                    setStreet("");
-                  }}
-                  className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 disabled:bg-gray-50 disabled:text-gray-400"
-                />
-                {showStreetDropdown && (
-                  <ul className="absolute z-10 mt-1 w-full max-h-56 overflow-auto rounded-md border border-gray-200 bg-white shadow-lg text-sm">
-                    {loadingStreets ? (
-                      <li className="px-3 py-2 text-gray-400">Loading…</li>
-                    ) : (
-                      streetSuggestions.map((s) => (
-                        <li
-                          key={s}
-                          onMouseDown={() => {
-                            setStreetInput(s);
-                            setStreet(s);
-                            setShowStreetDropdown(false);
-                          }}
-                          className="cursor-pointer px-3 py-2 hover:bg-blue-50 hover:text-blue-700"
+                >
+                  <div className="relative">
+                    <Label className="block text-sm/6 font-medium text-gray-700">Neighborhood</Label>
+                    <ListboxButton className="mt-1 flex w-full items-center justify-between rounded-lg border border-[#016B51]/20 bg-white/10 px-3 py-1.5 text-sm/6 shadow-sm backdrop-blur-sm focus:outline-2 focus:-outline-offset-2 focus:outline-white/25">
+                      <span className={neighborhood ? "text-gray-900" : "text-gray-400"}>
+                        {neighborhood?.label ?? "e.g. Back Bay"}
+                      </span>
+                      <ChevronDown className="size-4 text-gray-400 shrink-0" aria-hidden="true" />
+                    </ListboxButton>
+                    <ListboxOptions
+                      anchor="bottom"
+                      transition
+                      className="z-40 w-(--input-width) rounded-xl border border-white/10 bg-white/10 backdrop-blur-xl p-1 [--anchor-gap:--spacing(1)] empty:invisible transition duration-100 ease-in data-leave:data-closed:opacity-0 shadow-lg max-h-56 overflow-auto"
+                    >
+                      {NEIGHBORHOODS.map((n) => (
+                        <ListboxOption
+                          key={n.label}
+                          value={n}
+                          className="group flex cursor-default select-none items-center rounded-lg px-3 py-1.5 text-sm/6 text-gray-900 data-[focus]:bg-white/20"
                         >
-                          {s}
-                        </li>
-                      ))
-                    )}
-                  </ul>
-                )}
-              </div>
+                          {n.label}
+                        </ListboxOption>
+                      ))}
+                    </ListboxOptions>
+                  </div>
+                </Listbox>
 
-              {/* Zip Code */}
-              <div>
-                <label htmlFor="zipCode" className="block text-sm font-medium text-gray-700">
-                  Zip Code
-                </label>
-                <select
-                  id="zipCode"
-                  required
-                  value={zipCode}
-                  onChange={(e) => setZipCode(e.target.value)}
+                {/* Street combobox */}
+                <Combobox
+                  value={street}
+                  onChange={(val: string | null) => {
+                    setStreet(val ?? "");
+                    setStreetInput(val ?? "");
+                  }}
+                  onClose={() => setStreetInput(street)}
                   disabled={!neighborhood}
-                  className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 disabled:bg-gray-50 disabled:text-gray-400"
                 >
-                  <option value="">
-                    {neighborhood ? "Select zip code" : "Select neighborhood first"}
-                  </option>
-                  {(NEIGHBORHOOD_ZIP_CODES[neighborhood] ?? []).map((zip) => (
-                    <option key={zip} value={zip}>{zip}</option>
-                  ))}
-                </select>
+                  <div className="relative">
+                    <label htmlFor="street" className="block text-sm/6 font-medium text-gray-700">
+                      Street
+                    </label>
+                    <ComboboxInput
+                      id="street"
+                      autoComplete="off"
+                      placeholder={neighborhood?.value ? "Type to search…" : "Select neighborhood first"}
+                      displayValue={(val: string) => val}
+                      onChange={(e) => {
+                        setStreetInput(e.target.value);
+                        setStreet("");
+                      }}
+                      className="mt-1 block w-full rounded-lg border border-[#016B51]/20 bg-white/10 px-3 py-1.5 text-sm/6 text-gray-900 placeholder:text-gray-400 shadow-sm backdrop-blur-sm focus:outline-2 focus:-outline-offset-2 focus:outline-white/25 disabled:opacity-50 disabled:cursor-not-allowed"
+                    />
+                    <ComboboxOptions
+                      anchor="bottom"
+                      transition
+                      className="z-40 w-(--input-width) rounded-xl border border-white/10 bg-white/10 backdrop-blur-xl p-1 [--anchor-gap:--spacing(1)] empty:invisible transition duration-100 ease-in data-leave:data-closed:opacity-0 shadow-lg"
+                    >
+                      {streetInput.trim().length < 2 ? null : loadingStreets ? (
+                        <div className="px-3 py-1.5 text-sm/6 text-gray-500">Loading…</div>
+                      ) : streetSuggestions.length === 0 ? (
+                        <div className="px-3 py-1.5 text-sm/6 text-gray-500">No streets found</div>
+                      ) : (
+                        streetSuggestions.map((s) => (
+                          <ComboboxOption
+                            key={s}
+                            value={s}
+                            className="group flex cursor-default select-none items-center rounded-lg px-3 py-1.5 text-sm/6 text-gray-900 data-[focus]:bg-white/20"
+                          >
+                            {s}
+                          </ComboboxOption>
+                        ))
+                      )}
+                    </ComboboxOptions>
+                  </div>
+                </Combobox>
+
+                {/* Zip Code */}
+                <Field disabled={!neighborhood?.value}>
+                  <Label className="block text-sm/6 font-medium text-gray-700">Zip Code</Label>
+                  <div className="relative mt-1">
+                    <Select
+                      id="zipCode"
+                      required
+                      value={zipCode}
+                      onChange={(e) => setZipCode(e.target.value)}
+                      className="block w-full appearance-none rounded-lg border border-[#016B51]/20 bg-white/10 px-3 py-1.5 text-sm/6 text-gray-900 shadow-sm backdrop-blur-sm focus:outline-2 focus:-outline-offset-2 focus:outline-white/25 disabled:opacity-50 disabled:cursor-not-allowed *:text-black"
+                    >
+                      <option value="">
+                        {neighborhood?.value ? "Select zip code" : "Select neighborhood first"}
+                      </option>
+                      {(NEIGHBORHOOD_ZIP_CODES[neighborhood?.value ?? ""] ?? []).map((zip) => (
+                        <option key={zip} value={zip}>{zip}</option>
+                      ))}
+                    </Select>
+                    <ChevronDown className="pointer-events-none absolute top-2.5 right-2.5 size-4 text-gray-400" aria-hidden="true" />
+                  </div>
+                </Field>
               </div>
-            </div>
 
-            {/* Row 2 — Buyer profile */}
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              {/* Row 2 — Buyer profile */}
+              <div className="grid grid-cols-1 gap-4 sm:mt-8">
 
-              {/* Household type dropdown */}
-              <div>
-                <label htmlFor="householdType" className="block text-sm font-medium text-gray-700">
-                  Household Type <span className="text-gray-400 font-normal">(optional)</span>
-                </label>
-                <select
-                  id="householdType"
-                  value={householdType}
-                  onChange={(e) => setHouseholdType(e.target.value)}
-                  className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
-                >
-                  <option value="">Select household type…</option>
-                  {HOUSEHOLD_TYPES.map((h) => (
-                    <option key={h.value} value={h.value}>{h.label}</option>
-                  ))}
-                </select>
-              </div>
+                {/* Household type dropdown */}
+                <Field className="sm:max-w-xs">
+                  <Label className="block text-sm/6 font-medium text-gray-700">
+                    Household Type <span className="text-gray-400 font-normal">(optional)</span>
+                  </Label>
+                  <div className="relative mt-1">
+                    <Select
+                      id="householdType"
+                      value={householdType}
+                      onChange={(e) => setHouseholdType(e.target.value)}
+                      className="block w-full appearance-none rounded-lg border border-[#016B51]/20 bg-white/10 px-3 py-1.5 text-sm/6 text-gray-900 shadow-sm backdrop-blur-sm focus:outline-2 focus:-outline-offset-2 focus:outline-white/25 *:text-black"
+                    >
+                      <option value="">Select household type…</option>
+                      {HOUSEHOLD_TYPES.map((h) => (
+                        <option key={h.value} value={h.value}>{h.label}</option>
+                      ))}
+                    </Select>
+                    <ChevronDown className="pointer-events-none absolute top-2.5 right-2.5 size-4 text-gray-400" aria-hidden="true" />
+                  </div>
+                </Field>
 
-              {/* Property preferences badges */}
-              <div>
-                <p className="block text-sm font-medium text-gray-700">
-                  Property Preferences{" "}
-                  <span className="text-gray-400 font-normal">(optional · pick up to 2)</span>
-                </p>
-                <div className="mt-2 flex flex-wrap gap-2">
-                  {PROPERTY_TYPES.map((p) => {
-                    const selected = propertyPrefs.includes(p);
-                    const disabled = !selected && propertyPrefs.length >= 2;
-                    return (
-                      <button
-                        key={p}
-                        type="button"
-                        disabled={disabled}
-                        onClick={() => togglePropertyPref(p)}
-                        className={`rounded-full px-3 py-1 text-xs font-medium border transition-colors ${
-                          selected
-                            ? "bg-blue-600 border-blue-600 text-white"
-                            : disabled
-                            ? "bg-gray-50 border-gray-200 text-gray-300 cursor-not-allowed"
-                            : "bg-white border-gray-300 text-gray-600 hover:border-blue-400 hover:text-blue-600"
-                        }`}
-                      >
-                        {p}
-                      </button>
-                    );
-                  })}
+                {/* Property preferences badges */}
+                <div className="sm:mt-4">
+                  <p className="block text-sm font-medium text-gray-700">
+                    Property Preferences{" "}
+                    <span className="font-normal">(optional · pick up to 2)</span>
+                  </p>
+                  <div className="mt-2 flex flex-wrap gap-2">
+                    {PROPERTY_TYPES.map((p) => {
+                      const selected = propertyPrefs.includes(p);
+                      const disabled = !selected && propertyPrefs.length >= 2;
+                      return (
+                        <ShadcnButton
+                          key={p}
+                          type="button"
+                          disabled={disabled}
+                          onClick={() => togglePropertyPref(p)}
+                          size="sm"
+                          variant="outline"
+                          className={cn(
+                            "rounded-full border backdrop-blur-sm transition-colors",
+                            selected
+                              ? "bg-[#016B51]/10 border-[#016B51]/80 text-gray-900 hover:bg-[#016B51]/20"
+                              : "bg-white/10 border-[#016B51]/40 text-gray-700 hover:bg-white/20 hover:border-[#016B51]/60"
+                          )}
+                        >
+                          {p}
+                        </ShadcnButton>
+                      );
+                    })}
+                  </div>
                 </div>
               </div>
-            </div>
 
-            {formError && <p className="text-sm text-red-600">{formError}</p>}
+              {formError && <p className="text-sm text-red-600">{formError}</p>}
 
-            <button
-              type="submit"
-              disabled={submitting}
-              className="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50"
-            >
-              {submitting ? "Analyzing…" : "Analyze & Save"}
-            </button>
-          </form>
+              <Button
+                type="submit"
+                disabled={submitting}
+                className="inline-flex items-center gap-2 rounded-lg border border-[#016B51]/40 bg-white/10 px-4 py-1.5 text-sm/6 font-semibold text-gray-900 shadow-sm backdrop-blur-sm focus:not-data-focus:outline-none data-focus:outline-2 data-focus:outline-white/25 data-hover:bg-white/20 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              >
+                {submitting ? "Analyzing…" : "Analyze & Save"}
+              </Button>
+            </form>
+          </div>
         </section>
 
         {/* Loading state */}
         {submitting && (
-          <section className="bg-white rounded-lg border border-gray-200 p-6 space-y-6">
-            <div className="flex items-center gap-3">
-              <Spinner />
-              <p className="text-sm text-gray-500">
-                Running neighborhood analysis — this takes about 20–30 seconds…
-              </p>
-            </div>
-
-            {/* Table skeleton */}
-            <div className="space-y-3">
-              <Skeleton className="h-4 w-48" />
-              <div className="space-y-2">
-                <Skeleton className="h-8 w-full" />
-                <Skeleton className="h-8 w-full" />
-                <Skeleton className="h-8 w-full" />
-                <Skeleton className="h-8 w-full" />
-                <Skeleton className="h-8 w-3/4" />
-              </div>
-            </div>
-
-            {/* Text skeleton */}
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-              {Array.from({ length: 6 }).map((_, i) => (
-                <div key={i} className="space-y-2 rounded-lg border border-gray-200 p-4">
-                  <Skeleton className="h-4 w-32" />
-                  <Skeleton className="h-3 w-full" />
-                  <Skeleton className="h-3 w-full" />
-                  <Skeleton className="h-3 w-2/3" />
+          <section>
+            <div className="w-full rounded-xl bg-white/10 border border-[#016B51]/20 backdrop-blur-2xl p-6">
+              <div className="space-y-6">
+                <div className="flex items-center gap-3">
+                  <Spinner />
+                  <p className="text-sm text-gray-500">
+                    Running neighborhood analysis — this takes about 20–30 seconds…
+                  </p>
                 </div>
-              ))}
+
+                {/* Table skeleton */}
+                <div className="space-y-3">
+                  <Skeleton className="h-4 w-48" />
+                  <div className="space-y-2">
+                    <Skeleton className="h-8 w-full" />
+                    <Skeleton className="h-8 w-full" />
+                    <Skeleton className="h-8 w-full" />
+                    <Skeleton className="h-8 w-full" />
+                    <Skeleton className="h-8 w-3/4" />
+                  </div>
+                </div>
+
+                {/* Text skeleton */}
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                  {Array.from({ length: 6 }).map((_, i) => (
+                    <div key={i} className="space-y-2 rounded-lg border border-white/30 p-4">
+                      <Skeleton className="h-4 w-32" />
+                      <Skeleton className="h-3 w-full" />
+                      <Skeleton className="h-3 w-full" />
+                      <Skeleton className="h-3 w-2/3" />
+                    </div>
+                  ))}
+                </div>
+              </div>
             </div>
           </section>
         )}
 
         {/* Analysis Report */}
         {selectedAnalysis && !submitting && (
-          <section className="bg-white rounded-lg border border-gray-200 p-6 space-y-6">
-            <div>
-              <h2 className="text-lg font-semibold text-gray-900">Analysis Report</h2>
-              <p className="text-sm text-gray-500 mt-1">
-                {selectedAnalysis.neighborhood} · {selectedAnalysis.street} · {selectedAnalysis.zip_code}
-              </p>
-            </div>
+          <section>
+            <div className="w-full rounded-xl bg-white/10 border border-[#016B51]/20 backdrop-blur-2xl p-6">
+              <div className="space-y-6">
+                <div>
+                  <h2 className="text-lg font-semibold text-gray-900">Analysis Report</h2>
+                  <p className="text-sm text-gray-500 mt-1">
+                    {selectedAnalysis.neighborhood} · {selectedAnalysis.street} · {selectedAnalysis.zip_code}
+                  </p>
+                </div>
 
-            {(() => {
-              const crimeStat = selectedAnalysis.data.raw_stats?.find(
-                (s) => s.section === "crime_safety"
-              );
-              if (!crimeStat || !Array.isArray(crimeStat.data)) return null;
-              return (
-                <Stats03
-                  data={crimeStat.data as { offense: string; count: number }[]}
-                />
-              );
-            })()}
+                {(() => {
+                  const crimeStat = selectedAnalysis.data.raw_stats?.find(
+                    (s) => s.section === "crime_safety"
+                  );
+                  if (!crimeStat || !Array.isArray(crimeStat.data)) return null;
+                  return (
+                    <Stats03
+                      data={crimeStat.data as { offense: string; count: number }[]}
+                    />
+                  );
+                })()}
 
-            <button
-              type="button"
-              onClick={() => setMapOpen(true)}
-              className="inline-flex items-center gap-2 rounded-md bg-gray-900 px-4 py-2 text-sm font-medium text-white hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 transition-colors"
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
-                <path fillRule="evenodd" d="M12 1.586l-4 4v12.828l4-4V1.586zM3.707 3.293A1 1 0 002 4v10a1 1 0 00.293.707L6 18.414V5.586L3.707 3.293zM17.707 5.293L14 1.586v12.828l2.293 2.293A1 1 0 0018 16V6a1 1 0 00-.293-.707z" clipRule="evenodd" />
-              </svg>
-              View Crime Map
-            </button>
+                <Button
+                  type="button"
+                  onClick={() => setMapOpen(true)}
+                  className="inline-flex items-center gap-2 rounded-lg border border-[#016B51]/40 bg-white/10 px-4 py-1.5 text-sm/6 font-semibold text-gray-900 shadow-sm backdrop-blur-sm focus:not-data-focus:outline-none data-focus:outline-2 data-focus:outline-white/25 data-hover:bg-white/20 transition-colors"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                    <path fillRule="evenodd" d="M12 1.586l-4 4v12.828l4-4V1.586zM3.707 3.293A1 1 0 002 4v10a1 1 0 00.293.707L6 18.414V5.586L3.707 3.293zM17.707 5.293L14 1.586v12.828l2.293 2.293A1 1 0 0018 16V6a1 1 0 00-.293-.707z" clipRule="evenodd" />
+                  </svg>
+                  View Crime Map
+                </Button>
 
-            <div className="flex flex-col md:flex-row gap-4">
-              {(() => {
-                const statsProp = selectedAnalysis.data.raw_stats?.find(
-                  (s) => s.section === "property_mix"
-                );
-                if (!statsProp || Array.isArray(statsProp.data)) return null;
-                return (
-                  <CardStatPropertyMix
-                    data={statsProp.data as Record<string, number>}
-                    total={statsProp.total ?? 0}
-                  />
-                );
-              })()}
-              {(() => {
-                const stats311 = selectedAnalysis.data.raw_stats?.find(
-                  (s) => s.section === "requests_311"
-                );
-                if (!stats311 || !Array.isArray(stats311.data)) return null;
-                return (
-                  <CardStat311
-                    data={stats311.data as { type: string; count: number }[]}
-                    total={stats311.total ?? 0}
-                  />
-                );
-              })()}
-            </div>
+                <div className="flex flex-col md:flex-row gap-4">
+                  {(() => {
+                    const statsProp = selectedAnalysis.data.raw_stats?.find(
+                      (s) => s.section === "property_mix"
+                    );
+                    if (!statsProp || Array.isArray(statsProp.data)) return null;
+                    return (
+                      <CardStatPropertyMix
+                        data={statsProp.data as Record<string, number>}
+                        total={statsProp.total ?? 0}
+                      />
+                    );
+                  })()}
+                  {(() => {
+                    const stats311 = selectedAnalysis.data.raw_stats?.find(
+                      (s) => s.section === "requests_311"
+                    );
+                    if (!stats311 || !Array.isArray(stats311.data)) return null;
+                    return (
+                      <CardStat311
+                        data={stats311.data as { type: string; count: number }[]}
+                        total={stats311.total ?? 0}
+                      />
+                    );
+                  })()}
+                </div>
 
-            <AnalysisCard label="Overall Verdict"       content={selectedAnalysis.data.overall_verdict} variant="verdict" />
+                <AnalysisCard label="Overall Verdict"       content={selectedAnalysis.data.overall_verdict} variant="verdict" />
 
-            <div className="grid grid-cols-1 gap-4">
-              <AnalysisCard label="311 Service Requests"  content={selectedAnalysis.data.requests_311} />
-              <AnalysisCard label="Crime & Safety"        content={selectedAnalysis.data.crime_safety} />
-              <AnalysisCard label="Property Mix"          content={selectedAnalysis.data.property_mix} />
-              <AnalysisCard label="Building Permits"      content={selectedAnalysis.data.permit_activity} />
-              <AnalysisCard label="Entertainment Scene"   content={selectedAnalysis.data.entertainment_scene} />
-              <AnalysisCard label="Traffic Safety"        content={selectedAnalysis.data.traffic_safety} />
-              <AnalysisCard label="Gun Violence"          content={selectedAnalysis.data.gun_violence} />
-              <AnalysisCard label="Green Space"           content={selectedAnalysis.data.green_space} />
+                <div className="grid grid-cols-1 gap-4">
+                  <AnalysisCard label="311 Service Requests"  content={selectedAnalysis.data.requests_311}     tier={selectedAnalysis.data.neighborhood_tiers?.complaints_311} />
+                  <AnalysisCard label="Crime & Safety"        content={selectedAnalysis.data.crime_safety}     tier={selectedAnalysis.data.neighborhood_tiers?.crime} />
+                  <AnalysisCard label="Property Mix"          content={selectedAnalysis.data.property_mix} />
+                  <AnalysisCard label="Building Permits"      content={selectedAnalysis.data.permit_activity} />
+                  <AnalysisCard label="Entertainment Scene"   content={selectedAnalysis.data.entertainment_scene} />
+                  <AnalysisCard label="Traffic Safety"        content={selectedAnalysis.data.traffic_safety} />
+                  <AnalysisCard label="Gun Violence"          content={selectedAnalysis.data.gun_violence} />
+                  <AnalysisCard label="Green Space"           content={selectedAnalysis.data.green_space} />
+                </div>
+              </div>
             </div>
           </section>
         )}
@@ -809,10 +834,10 @@ export default function DashboardPage() {
                 <div
                   key={s.id}
                   onClick={() => handleCardClick(s)}
-                  className={`rounded-lg border p-4 flex items-start justify-between cursor-pointer transition-colors ${
+                  className={`rounded-lg border p-4 flex items-start justify-between cursor-pointer transition-colors backdrop-blur-md ${
                     selectedSearchId === s.id
-                      ? "bg-blue-50 border-blue-300"
-                      : "bg-white border-gray-200 hover:bg-gray-50"
+                      ? "bg-blue-50/70 border-blue-300/60"
+                      : "bg-white/60 border-white/40 hover:bg-white/80"
                   }`}
                 >
                   <div>
@@ -866,7 +891,7 @@ export default function DashboardPage() {
               key={selectedAnalysis?.neighborhood ?? "boston"}
               initialViewState={
                 selectedAnalysis
-                  ? NEIGHBORHOOD_COORDINATES[selectedAnalysis.neighborhood] ?? BOSTON_CENTER
+                  ? NEIGHBORHOOD_COORDINATES[selectedAnalysis.neighborhood] ?? BOSTON_CENTER  // selectedAnalysis.neighborhood is already a string value
                   : BOSTON_CENTER
               }
               style={{ width: "100%", height: "100%" }}

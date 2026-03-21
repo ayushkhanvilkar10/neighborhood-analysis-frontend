@@ -1,14 +1,13 @@
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 const COLORS = [
-  "bg-[var(--chart-1)]",
-  "bg-[var(--chart-2)]",
-  "bg-[var(--chart-3)]",
-  "bg-[var(--chart-4)]",
-  "bg-[var(--chart-5)]",
-  "bg-[var(--chart-1)]",
+  "bg-[#8FC99A]",  /* light green */
+  "bg-[#4AADA8]",  /* teal — borderline green/blue */
+  "bg-[#2E8B72]",  /* mid forest green */
+  "bg-[#016B51]",  /* deep forest */
+  "bg-[#A3B842]",  /* olive/chartreuse — borderline green/yellow */
+  "bg-[#8FC99A]",  /* light green (repeat) */
 ];
 
 interface PropertyMixProps {
@@ -27,14 +26,14 @@ export default function CardStatPropertyMix({ data, total }: PropertyMixProps) {
 
   return (
     <div className="mx-auto md:w-[400px]">
-      <Card>
-        <CardHeader>
-          <CardTitle>Property Mix</CardTitle>
-          <CardDescription>
-            <span className="font-semibold text-foreground">{total.toLocaleString()}</span> total properties
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
+      <div className="rounded-xl bg-verdict/40 border border-[#016B51]/20 backdrop-blur-md p-4">
+        <div className="mb-4">
+          <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">Property Mix</p>
+          <p className="text-sm text-gray-600 mt-0.5">
+            <span className="font-semibold text-gray-900">{total.toLocaleString()}</span> total properties
+          </p>
+        </div>
+        <div>
           <TooltipProvider>
             <div className="mb-6 flex h-4 w-full overflow-hidden rounded-full">
               {entries.map((entry) => (
@@ -81,8 +80,8 @@ export default function CardStatPropertyMix({ data, total }: PropertyMixProps) {
               </div>
             ))}
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
     </div>
   );
 }

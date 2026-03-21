@@ -1,5 +1,3 @@
-import { Card, CardContent } from "@/components/ui/card";
-
 interface CrimeItem {
   offense: string;
   count: number;
@@ -14,17 +12,14 @@ export default function Stats03({ data }: Stats03Props) {
     <div className="flex items-center justify-center w-full">
       <dl className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4 w-full">
         {data.map((item) => (
-          <Card key={item.offense} className="p-6 py-4 shadow-2xs">
-            <CardContent className="p-0">
-              <dt className="text-sm font-medium text-muted-foreground">{item.offense}</dt>
-              <dd className="mt-2 flex items-baseline space-x-2.5">
-                <span className="tabular-nums text-3xl font-semibold text-foreground">
-                  {item.count.toLocaleString()}
-                </span>
-                {/* TODO: implement change for crime safety */}
-              </dd>
-            </CardContent>
-          </Card>
+          <div key={item.offense} className="rounded-xl bg-verdict/40 border border-[#016B51]/20 backdrop-blur-md p-4">
+            <dt className="text-xs font-semibold uppercase tracking-wide text-gray-500">{item.offense}</dt>
+            <dd className="mt-2 flex items-baseline space-x-2.5">
+              <span className="tabular-nums text-3xl font-semibold text-gray-900">
+                {item.count.toLocaleString()}
+              </span>
+            </dd>
+          </div>
         ))}
       </dl>
     </div>
