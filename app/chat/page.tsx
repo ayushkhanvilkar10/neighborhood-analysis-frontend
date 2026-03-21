@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState, useCallback } from "react";
+import { useEffect, useRef, useState, useCallback, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import type { Session } from "@supabase/supabase-js";
@@ -36,7 +36,7 @@ function authHeaders(session: Session) {
 // Chat page
 // ─────────────────────────────────────────────
 
-export default function ChatPage() {
+function ChatPageInner() {
   const router       = useRouter();
   const searchParams = useSearchParams();
   const sessionId    = searchParams.get("session");
@@ -180,10 +180,6 @@ export default function ChatPage() {
     );
   }
 
-  // ─────────────────────────────────────────────
-  // Render
-  // ─────────────────────────────────────────────
-
   return (
     <div className="h-[calc(100vh-3.5rem)] lg:h-screen flex flex-col"
       style={{
@@ -300,5 +296,17 @@ export default function ChatPage() {
         )}
       </main>
     </div>
+  );
+}
+
+export default function ChatPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center">
+        <p className="text-gray-500">Loading…</p>
+      </div>
+    }>
+      <ChatPageInner />
+    </Suspense>
   );
 }
