@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Button, Combobox, ComboboxInput, ComboboxOption, ComboboxOptions, Field, Input, Label, Listbox, ListboxButton, ListboxOption, ListboxOptions, Select } from "@headlessui/react";
+import { Button, Combobox, ComboboxInput, ComboboxOption, ComboboxOptions, Field, Label, Listbox, ListboxButton, ListboxOption, ListboxOptions, Select } from "@headlessui/react";
 import { ChevronDown } from "lucide-react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
@@ -16,7 +16,7 @@ import { Spinner } from "@/components/ui/spinner";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button as ShadcnButton } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { LiquidGlassCard } from "@/components/ui/liquid-weather-glass";
+
 
 const MAPBOX_TOKEN = process.env.NEXT_PUBLIC_MAPBOX_TOKEN!;
 const BOSTON_CENTER = { longitude: -71.0589, latitude: 42.3601, zoom: 12 };
