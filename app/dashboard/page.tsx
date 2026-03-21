@@ -4,7 +4,6 @@ import { useEffect, useState } from "react";
 import { Button, Combobox, ComboboxInput, ComboboxOption, ComboboxOptions, Field, Label, Listbox, ListboxButton, ListboxOption, ListboxOptions, Select } from "@headlessui/react";
 import { ChevronDown } from "lucide-react";
 import { useRouter } from "next/navigation";
-import Link from "next/link";
 import { supabase } from "@/lib/supabase";
 import type { Session } from "@supabase/supabase-js";
 import CardStatPropertyMix from "@/components/stat-cards-02";
@@ -461,11 +460,6 @@ export default function DashboardPage() {
     } catch { /* silently ignore */ }
   }
 
-  async function handleSignOut() {
-    await supabase.auth.signOut();
-    router.replace("/login");
-  }
-
   if (!session) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -486,35 +480,6 @@ export default function DashboardPage() {
         backgroundAttachment: "fixed",
       }}
     >
-      {/* Navbar */}
-      <nav className="bg-white/70 backdrop-blur-md border-b border-white/40">
-        <div className="mx-auto max-w-4xl flex items-center justify-between px-4 py-3">
-          <div className="flex items-center gap-6">
-            <span className="text-lg font-semibold text-gray-900">Neighborhood Analysis</span>
-            <div className="flex items-center gap-4">
-              <Link
-                href="/dashboard"
-                className="text-sm font-medium text-blue-600 border-b-2 border-blue-600 pb-0.5"
-              >
-                Analysis
-              </Link>
-              <Link
-                href="/chat"
-                className="text-sm font-medium text-gray-500 hover:text-gray-900"
-              >
-                Chat
-              </Link>
-            </div>
-          </div>
-          <button
-            onClick={handleSignOut}
-            className="text-sm font-medium text-gray-600 hover:text-gray-900"
-          >
-            Sign Out
-          </button>
-        </div>
-      </nav>
-
       <main className="mx-auto max-w-4xl px-4 py-8 space-y-8">
 
         {/* Form */}
