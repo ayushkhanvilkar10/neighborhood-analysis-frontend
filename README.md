@@ -9,20 +9,23 @@ A Next.js frontend for a neighborhood analysis application focused on Boston. Us
 
 ## Tech Stack
 
-| Layer         | Technology                                                  |
-| ------------- | ----------------------------------------------------------- |
-| Framework     | Next.js 16 (App Router) + TypeScript                        |
-| Styling       | Tailwind CSS v4                                             |
-| Auth          | Supabase (`@supabase/supabase-js` + `@supabase/ssr`)        |
-| Realtime      | WebSocket (streaming chat responses from FastAPI backend)   |
-| Deployment    | Vercel (auto-deploy on push to `main`)                      |
+| Layer         | Technology                                                        |
+| ------------- | ----------------------------------------------------------------- |
+| Framework     | Next.js 16 (App Router) + TypeScript                              |
+| Styling       | Tailwind CSS v4                                                   |
+| UI Components | shadcn/ui + Headless UI v2 (`@headlessui/react`)                  |
+| Auth          | Supabase (`@supabase/supabase-js` + `@supabase/ssr`)              |
+| Realtime      | WebSocket (streaming chat responses from FastAPI backend)         |
+| Maps          | Mapbox GL JS via `react-map-gl`                                   |
+| Animation     | Framer Motion                                                     |
+| Deployment    | Vercel (auto-deploy on push to `main`)                            |
 
 ## Pages
 
-| Route        | Description                                                                 |
-| ------------ | --------------------------------------------------------------------------- |
-| `/`          | Checks auth state and redirects to `/login` or `/dashboard`                 |
-| `/login`     | Email/password sign in and sign up via Supabase auth                        |
+| Route        | Description                                                                  |
+| ------------ | ---------------------------------------------------------------------------- |
+| `/`          | Checks auth state and redirects to `/login` or `/dashboard`                  |
+| `/login`     | Email/password sign in and sign up via Supabase auth                         |
 | `/dashboard` | Protected — neighborhood search form, buyer preferences, saved searches list |
 | `/chat`      | Protected — streaming multi-turn chat with the Boston neighborhood AI agent  |
 
@@ -36,36 +39,88 @@ A Next.js frontend for a neighborhood analysis application focused on Boston. Us
 
 ## Features
 
+### Navigation
+- Persistent left sidebar on desktop (`lg:w-56`) — always visible, shows Analysis and Chat links with active state highlighting
+- On the `/chat` page, the sidebar also displays all chat sessions with a New Chat button
+- On mobile, a fixed top bar with a hamburger button opens a full-screen shadcn `Sheet` with the same nav content
+- Navigation is hidden on the `/login` page
+- Built as a shared `AppNav` component in `components/app-nav.tsx`, rendered once in `layout.tsx`
+
 ### Neighborhood Analysis (Dashboard)
-- Submit a search form with neighborhood, street, zip code, household type, and property preferences
-- The backend runs a parallel 8-node LangGraph agent that hits Boston Open Data APIs (311, crime, property, permits, entertainment, traffic safety, gun violence, green space)
-- The agent returns a structured 9-field report personalized to the buyer's household type and property preferences
+- Search form using Headless UI components: `Listbox` for neighborhood selection, `Combobox` for street autocomplete (queries Boston Open Data live with 300ms debounce), `Select` for zip code and household type
+- Property preferences as pill-shaped shadcn `Button` toggles (max 2, `rounded-full`)
+- The backend runs a parallel 8-node LangGraph agent across Boston Open Data APIs (311, crime, property, permits, entertainment, traffic safety, gun violence, green space)
+- The agent returns a 9-field structured report personalized to the buyer's household type and property preferences
+- The response also includes `raw_stats` (crime counts, property breakdown, 311 breakdown) and `neighborhood_tiers` (crime and 311 tier: High / Moderate / Low) pre-computed from `agent/neighborhood_tiers.json`
+- Crime stats displayed as a stat card grid (`Stats03`), property mix as a donut/progress bar card (`CardStatPropertyMix`), 311 requests as a ranked list card (`CardStat311`)
+- Crime & Safety and 311 Service Requests analysis cards show a tier badge (red/yellow/green) in the section title
 - Reports are saved to Supabase and listed in the saved searches panel
 - Saved searches can be deleted individually
+- Mapbox crime map modal overlaid on the current neighborhood
 
 ### Streaming Chat (`/chat`)
 - Multi-turn conversational interface with a ReAct agent
-- Agent has access to three tools: `fetch_311`, `fetch_crime`, `fetch_property`
-- Responses stream token-by-token via WebSocket connection to the FastAPI backend
-- Conversation history is maintained within the session so the agent can reference earlier turns
+- Agent has access to seven tools: `fetch_311`, `fetch_crime`, `fetch_property`, `fetch_permits`, `fetch_entertainment`, `fetch_traffic_safety`, `fetch_gun_violence`
+- Responses stream token-by-token via WebSocket — tokens are batched via `requestAnimationFrame` (~60fps) rather than triggering a React re-render on every token
+- During streaming, content renders as plain text (no markdown parsing on incomplete strings); markdown is parsed once after `[DONE]` fires
+- Active session is driven by `?session=<id>` URL param — the sidebar in `AppNav` handles session creation and selection by pushing to the router
+- Conversation history is maintained within the session
+
+## Design System
+
+The UI uses a consistent glass aesthetic derived from the `login-hero.svg` background palette (`#FDF2ED` cream + `#016B51` deep forest green → `#64A59C` teal gradient).
+
+Key design tokens in `globals.css`:
+- `--color-verdict: #F7E1D8` — warm cream used as the background for all stat cards, the verdict card, and the "Add a Search" section
+- `--color-forest: #016B51` — deep forest green used as the border color across all cards and form inputs
+
+Glass card pattern used throughout:
+```
+rounded-xl bg-verdict/40 border border-[#016B51]/20 backdrop-blur-md
+```
+
+Section wrapper pattern:
+```
+rounded-xl bg-verdict/40 border border-[#016B51]/20 backdrop-blur-2xl
+```
+
+Property mix chart colors step through a distinct 5-color green palette: `#D4E8A0` (yellow-green), `#4AADA8` (teal), `#2E8B72` (mid green), `#016B51` (deep forest), `#A3B842` (olive).
 
 ## Project Structure
 
 ```
 neighborhood-analysis-frontend/
 ├── app/
-│   ├── layout.tsx          # Root layout with Geist font and global styles
-│   ├── globals.css         # Tailwind CSS v4 import
-│   ├── page.tsx            # Root redirect — sends users to /login or /dashboard
+│   ├── layout.tsx           # Root layout — renders AppNav + AppShell
+│   ├── globals.css          # Tailwind CSS v4 + custom color tokens + streaming animation
+│   ├── page.tsx             # Root redirect
 │   ├── login/
-│   │   └── page.tsx        # Sign in / Sign up page with Supabase auth
+│   │   └── page.tsx         # Sign in / Sign up
 │   ├── dashboard/
-│   │   └── page.tsx        # Protected page with search form and saved searches list
+│   │   └── page.tsx         # Search form, analysis report, saved searches
 │   └── chat/
-│       └── page.tsx        # Protected streaming chat interface
+│       └── page.tsx         # Streaming chat interface (session via URL param)
+├── components/
+│   ├── app-nav.tsx          # Shared sidebar (desktop) + Sheet (mobile) navigation
+│   ├── app-shell.tsx        # Client wrapper — applies sidebar/topbar offset except on /login
+│   ├── stats-03.tsx         # Crime stat card grid
+│   ├── stat-cards-02.tsx    # Property mix card with progress bars
+│   ├── stat-cards-03.tsx    # 311 service requests card
+│   └── ui/
+│       ├── button.tsx       # shadcn Button
+│       ├── sheet.tsx        # shadcn Sheet (mobile nav drawer)
+│       ├── skeleton.tsx     # shadcn Skeleton
+│       ├── spinner.tsx      # Loading spinner
+│       ├── loader.tsx       # TextShimmerLoader for chat thinking state
+│       └── ...              # Other shadcn primitives
+├── docs/
+│   └── chat-streaming-overhaul.md  # Documents rAF batching + streaming UI improvements
 ├── lib/
-│   └── supabase.ts         # Supabase browser client using createBrowserClient
-├── .env.local              # Local environment variables (gitignored)
+│   └── supabase.ts          # Supabase browser client
+├── public/
+│   └── images/
+│       └── login-hero.svg   # Background SVG (cream + forest green/teal gradient)
+├── .env.local               # Local environment variables (gitignored)
 ├── next.config.ts
 ├── tsconfig.json
 └── package.json
@@ -92,6 +147,7 @@ npm install
 NEXT_PUBLIC_SUPABASE_URL=your_supabase_project_url
 NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
 NEXT_PUBLIC_API_URL=your_railway_backend_url
+NEXT_PUBLIC_MAPBOX_TOKEN=your_mapbox_public_token
 ```
 
 4. Start the development server:
@@ -104,11 +160,12 @@ npm run dev
 
 ## Environment Variables
 
-| Variable                      | Description                          |
-| ----------------------------- | ------------------------------------ |
-| `NEXT_PUBLIC_SUPABASE_URL`    | Your Supabase project URL            |
-| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Your Supabase anon/public key      |
-| `NEXT_PUBLIC_API_URL`         | The Railway backend base URL         |
+| Variable                        | Description                          |
+| ------------------------------- | ------------------------------------ |
+| `NEXT_PUBLIC_SUPABASE_URL`      | Your Supabase project URL            |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Your Supabase anon/public key        |
+| `NEXT_PUBLIC_API_URL`           | The Railway backend base URL         |
+| `NEXT_PUBLIC_MAPBOX_TOKEN`      | Mapbox public access token for maps  |
 
 ## Deployment
 
@@ -121,45 +178,6 @@ npm run dev
 ## Roadmap
 
 - Comparison view between multiple saved neighborhoods
-- Persistent chat sessions — save and revisit past conversations from Supabase
-- Buyer preferences profile page — store household type and property preferences per user so the agent always has context without re-entering the form
-- Map visualization of neighborhood data overlays
-
----
-
-## UI Component Research — SQL Data Display
-
-The backend will soon return raw SQL query results alongside the agent analysis in the `POST /searches` response. The following React components were researched for displaying those numbers on the UI.
-
-**Search query used:** `React stats card components numbers data display shadcn tailwind 2024 2025`
-
-### Starting Points (from 21st.dev)
-| Component | URL |
-| --------- | --- |
-| Stats Section | https://21st.dev/community/components/tommyjepsen/stats-section/default |
-| Animated Gradient with SVG | https://21st.dev/community/components/danielpetho/animated-gradient-with-svg/default |
-
-### Animated Number Components
-| Component | URL | Notes |
-| --------- | --- | ----- |
-| Magic UI — Number Ticker | https://magicui.design/docs/components/number-ticker | Counts up/down to a target number with smooth animation. Supports decimals and custom start values. Install: `pnpm dlx shadcn@latest add @magicui/number-ticker` |
-| Magic UI — Animated Circular Progress Bar | https://magicui.design/docs/components/animated-circular-progress-bar | Circular ring that fills to a percentage on mount. Good for property type share or safety scores |
-| Bundui — Counter Animation | https://bundui.io/motion/components/counter-animation | Framer Motion-based counter with configurable easing |
-| Bundui — Sliding Number | https://bundui.io/motion/components/sliding-number | Digits slide in like an odometer — good for headline counts |
-
-### Stat Card Grids
-| Component | URL | Notes |
-| --------- | --- | ----- |
-| blocks.so — Stats with Trending | https://blocks.so/stats/stats-01 | Number + up/down trend arrow |
-| blocks.so — Stats with Badges | https://blocks.so/stats/stats-04 | Label + colored badge, good for crime severity |
-| blocks.so — Stats with Area Chart | https://blocks.so/stats/stats-10 | Number + inline mini sparkline chart |
-| blocks.so — Stats Dashboard with Progress Bars | https://blocks.so/stats/stats-11 | Category breakdown with progress bars — ideal for property type mix |
-| blocks.so — Stats with Value Breakdown | https://blocks.so/stats/stats-15 | Total split into sub-values — ideal for 311 complaint type breakdown |
-| blocks.so — Full Stats Collection (15 variants) | https://blocks.so/stats | All 15 free shadcn/ui stat block variants |
-| Bundui — 8 Stats Card Blocks | https://bundui.io/blocks/dashboard-ui/stat-cards | Dashboard-style stat cards with icons and metric labels |
-| shadcnblocks.com — Stats10 | https://www.shadcnblocks.com/block/stats10 | Grid of cards with bold metric, avatar/logo, and description |
-
-### Interactive / Animated Cards
-| Component | URL | Notes |
-| --------- | --- | ----- |
-| Interactive Shadcn Flip Cards | https://github.com/Shadcn-Widgets/Interactive-Shadcn-Flip-Cards | Gradient front shows the count; Recharts bar chart revealed on hover. Uses `@react-spring/web`. Great for showing count on front and distribution on back |
+- Buyer preferences profile page — store household type and property preferences per user so the agent always has context without re-entering the form (requires `user_preferences` Supabase table — see backend roadmap)
+- Map visualization with crime and 311 data overlays on the Mapbox map (coordinates are available in both datasets)
+- Scoring/rating badges per analysis section derived from the neighborhood tier data

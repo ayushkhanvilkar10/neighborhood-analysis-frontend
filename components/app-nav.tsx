@@ -161,6 +161,15 @@ export function AppNav() {
     fetchChatSessions(session);
   }, [session, isChat]);
 
+  // ── Re-fetch when chat/page.tsx creates a new session on first send ──
+  useEffect(() => {
+    function onSessionCreated() {
+      if (session) fetchChatSessions(session);
+    }
+    window.addEventListener("chat-session-created", onSessionCreated);
+    return () => window.removeEventListener("chat-session-created", onSessionCreated);
+  }, [session]);
+
   // Don't render nav on login page (must be after all hooks)
   if (pathname === "/login") return null;
 
@@ -180,23 +189,9 @@ export function AppNav() {
     }
   }
 
-  async function handleNewChat() {
-    if (!session) return;
-    try {
-      const res = await fetch(`${API_URL}/chat/sessions`, {
-        method:  "POST",
-        headers: {
-          Authorization:  `Bearer ${session.access_token}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ first_message: "New conversation" }),
-      });
-      if (!res.ok) throw new Error();
-      const newSession: ChatSession = await res.json();
-      setChatSessions((prev) => [newSession, ...prev]);
-      setActiveChatSessionId(newSession.id);
-      router.push(`/chat?session=${newSession.id}`);
-    } catch {}
+  function handleNewChat() {
+    setActiveChatSessionId(null);
+    router.push("/chat");
   }
 
   function handleSelectSession(id: string) {
