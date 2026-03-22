@@ -38,8 +38,8 @@ export const SignInPage: React.FC<SignInPageProps> = ({
   const isSignUp = mode === 'signup';
 
   const defaultTitle = isSignUp
-    ? <span className="font-light text-foreground tracking-tighter">Join The Hunt</span>
-    : <span className="font-light text-foreground tracking-tighter">The Hunt</span>;
+    ? <span style={{ fontFamily: 'var(--font-nanum-myeongjo)' }} className="font-bold text-foreground tracking-tighter">Join The Hunt</span>
+    : <span style={{ fontFamily: 'var(--font-nanum-myeongjo)' }} className="font-bold text-foreground tracking-tighter">The Hunt</span>;
 
   const defaultDescription = isSignUp
     ? "Create your account and start discovering your perfect neighborhood"

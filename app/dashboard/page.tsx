@@ -801,7 +801,7 @@ export default function DashboardPage() {
                   onClick={() => handleCardClick(s)}
                   className={`rounded-lg border p-4 flex items-start justify-between cursor-pointer transition-colors backdrop-blur-md ${
                     selectedSearchId === s.id
-                      ? "bg-blue-50/70 border-blue-300/60"
+                      ? "bg-[#016B51]/10 border-[#016B51]/80"
                       : "bg-white/60 border-white/40 hover:bg-white/80"
                   }`}
                 >

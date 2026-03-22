@@ -51,9 +51,9 @@ function NavContent({
 
       {/* Brand */}
       <div className="px-3 mb-6">
-        <span className="text-sm font-semibold text-gray-900 tracking-tight">
-          Neighborhood Analysis
-        </span>
+        <h1 style={{ fontFamily: 'var(--font-nanum-myeongjo)' }} className="text-xl font-bold text-gray-900 tracking-tight">
+          The Hunt
+        </h1>
       </div>
 
       {/* Analysis link */}
@@ -239,7 +239,7 @@ export function AppNav() {
             <NavContent {...navProps} />
           </SheetContent>
         </Sheet>
-        <span className="ml-3 text-sm font-semibold text-gray-900">Neighborhood Analysis</span>
+        <span style={{ fontFamily: 'var(--font-nanum-myeongjo)' }} className="ml-3 text-sm font-bold text-gray-900">The Hunt</span>
       </div>
     </>
   );

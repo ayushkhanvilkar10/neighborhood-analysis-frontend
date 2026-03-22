@@ -83,19 +83,23 @@ function ChatPageInner() {
     }
 
     setMessages([]);
-    setLoadingHistory(true);
 
-    try {
-      const res = await fetch(
-        `${API_URL}/chat/sessions/${sid}/messages`,
-        { headers: authHeaders(s) }
-      );
-      if (!res.ok) throw new Error();
-      setMessages(await res.json());
-    } catch {
-      setMessages([]);
-    } finally {
-      setLoadingHistory(false);
+    // Skip history fetch for brand-new sessions — pendingFirstMsgRef means
+    // there are no saved messages yet and ws.onopen will inject the bubble.
+    if (!pendingFirstMsgRef.current) {
+      setLoadingHistory(true);
+      try {
+        const res = await fetch(
+          `${API_URL}/chat/sessions/${sid}/messages`,
+          { headers: authHeaders(s) }
+        );
+        if (!res.ok) throw new Error();
+        setMessages(await res.json());
+      } catch {
+        setMessages([]);
+      } finally {
+        setLoadingHistory(false);
+      }
     }
 
     const ws = new WebSocket(`${WS_BASE}/ws/chat/${sid}?token=${s.access_token}`);
@@ -176,8 +180,8 @@ function ChatPageInner() {
   // Send message
   // ─────────────────────────────────────────────
 
-  async function handleSend() {
-    const text = input.trim();
+  async function handleSend(overrideText?: string) {
+    const text = (overrideText ?? input).trim();
     if (!text || !session || sending) return;
 
     // ── No session yet: create one using the first message as the title ──
@@ -246,10 +250,29 @@ function ChatPageInner() {
         {/* ── Message area — always rendered ── */}
         <div className="flex-1 overflow-y-auto px-6 py-6 space-y-4">
 
-          {/* Fresh chat state — no session yet */}
+          {/* Fresh chat state — starter prompts */}
           {!sessionId && (
-            <div className="flex h-full items-center justify-center">
-              <p className="text-gray-400 text-sm">Ask anything about Boston neighborhoods.</p>
+            <div className="flex flex-col items-center justify-center h-full gap-6 px-4">
+              <h1 className="text-gray-700 text-2xl font-semibold text-center">Ask anything about<br />Boston neighborhoods</h1>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 w-full max-w-xl">
+                {[
+                  { label: "Crime & Safety",      prompt: "How safe is Back Bay in terms of crime?" },
+                  { label: "311 Complaints",       prompt: "What are the most common 311 complaints in South End?" },
+                  { label: "Property Mix",         prompt: "What is the property mix in zip code 02116?" },
+                  { label: "Gun Violence",         prompt: "How safe is Roxbury in terms of gun violence?" },
+                  { label: "Entertainment Scene", prompt: "What is the entertainment scene like in Fenway?" },
+                  { label: "Green Space",          prompt: "Tell me about green spaces in Jamaica Plain." },
+                ].map(({ label, prompt }) => (
+                  <button
+                    key={label}
+                    onClick={() => handleSend(prompt)}
+                    className="rounded-xl bg-verdict/40 border border-[#016B51]/20 backdrop-blur-md px-4 py-3 text-left hover:bg-verdict/60 hover:border-[#016B51]/40 transition-colors group"
+                  >
+                    <p className="text-xs font-semibold uppercase tracking-wide text-gray-500 group-hover:text-[#016B51] transition-colors">{label}</p>
+                    <p className="text-sm text-gray-700 mt-0.5 leading-snug">{prompt}</p>
+                  </button>
+                ))}
+              </div>
             </div>
           )}
 
