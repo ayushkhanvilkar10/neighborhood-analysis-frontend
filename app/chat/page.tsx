@@ -350,7 +350,7 @@ function ChatPageInner() {
               className="flex-1 resize-none rounded-xl border border-[#016B51]/20 bg-white/10 px-4 py-2.5 text-sm/6 text-gray-900 placeholder:text-gray-400 shadow-sm backdrop-blur-sm focus:outline-2 focus:-outline-offset-2 focus:outline-white/25 disabled:opacity-50"
             />
             <button
-              onClick={handleSend}
+              onClick={() => handleSend()}
               disabled={sending || !input.trim()}
               className="inline-flex items-center rounded-lg border border-[#016B51]/40 bg-white/10 px-4 py-2.5 text-sm/6 font-semibold text-gray-900 backdrop-blur-sm hover:bg-white/20 disabled:opacity-50 transition-colors"
             >
