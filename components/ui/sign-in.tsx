@@ -17,7 +17,7 @@ interface SignInPageProps {
 }
 
 const GlassInputWrapper = ({ children }: { children: React.ReactNode }) => (
-  <div className="rounded-2xl border border-border bg-foreground/5 backdrop-blur-sm transition-colors focus-within:border-violet-400/70 focus-within:bg-violet-500/10">
+  <div className="rounded-2xl border border-border bg-foreground/5 backdrop-blur-sm transition-colors focus-within:border-[#016B51]/70 focus-within:bg-[#016B51]/10">
     {children}
   </div>
 );
@@ -49,7 +49,7 @@ export const SignInPage: React.FC<SignInPageProps> = ({
     <div className="h-[100dvh] flex flex-col md:flex-row font-geist w-[100dvw]">
       <section className="flex-1 flex items-center justify-center p-8">
         <div className="w-full max-w-md">
-          <div className="flex flex-col gap-6">
+          <div className="flex flex-col gap-6 rounded-xl bg-white/10 border border-[#016B51]/20 backdrop-blur-md p-8">
             <h1 className="animate-element animate-delay-100 text-4xl md:text-5xl font-semibold leading-tight">
               {title || defaultTitle}
             </h1>
@@ -91,9 +91,9 @@ export const SignInPage: React.FC<SignInPageProps> = ({
 
             <p className="animate-element animate-delay-600 text-center text-sm text-muted-foreground">
               {isSignUp ? (
-                <>Already have an account?{' '}<a href="#" onClick={(e) => { e.preventDefault(); onToggleMode?.(); }} className="text-violet-400 hover:underline transition-colors">Sign In</a></>
+                <>Already have an account?{' '}<a href="#" onClick={(e) => { e.preventDefault(); onToggleMode?.(); }} className="text-[#016B51] hover:underline transition-colors">Sign In</a></>
               ) : (
-                <>New to our platform?{' '}<a href="#" onClick={(e) => { e.preventDefault(); onToggleMode?.(); }} className="text-violet-400 hover:underline transition-colors">Create Account</a></>
+                <>New to our platform?{' '}<a href="#" onClick={(e) => { e.preventDefault(); onToggleMode?.(); }} className="text-[#016B51] hover:underline transition-colors">Create Account</a></>
               )}
             </p>
           </div>

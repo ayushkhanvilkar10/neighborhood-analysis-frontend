@@ -211,15 +211,52 @@ function authHeaders(session: Session) {
 // ─────────────────────────────────────────────
 // Analysis card component
 // ─────────────────────────────────────────────
-function TierBadge({ tier }: { tier: "High" | "Moderate" | "Low" }) {
-  const styles = {
-    High:     "bg-red-100 text-red-700 border-red-200",
-    Moderate: "bg-yellow-100 text-yellow-700 border-yellow-200",
-    Low:      "bg-green-100 text-green-700 border-green-200",
-  }[tier];
+const SERIOUS_CRIME_TYPES = new Set([
+  "ASSAULT - AGGRAVATED",
+  "THREATS TO DO BODILY HARM",
+  "ROBBERY",
+  "DRUGS - POSSESSION/ SALE/ MANUFACTURING/ USE",
+  "BURGLARY - RESIDENTIAL",
+]);
+
+const SERIOUS_311_TYPES = new Set([
+  "CE Collection",
+  "Needle Pickup",
+  "Encampments",
+  "Heat - Excessive  Insufficient",
+  "Unsatisfactory Living Conditions",
+]);
+
+function formatFlagSentence(
+  items: { label: string; count: number }[],
+  kind: "crime" | "311"
+): string {
+  const active = items.filter(i => i.count > 0);
+  if (active.length === 0) return "";
+  const parts = active.map(i => `${i.count.toLocaleString()} ${i.label}`);
+  const list =
+    parts.length === 1
+      ? parts[0]
+      : parts.length === 2
+      ? `${parts[0]} and ${parts[1]}`
+      : `${parts.slice(0, -1).join(", ")}, and ${parts[parts.length - 1]}`;
+  return kind === "311"
+    ? `${list} requests in 2026`
+    : `${list} incidents on this street`;
+}
+
+function FlagBadge({
+  items,
+  kind,
+}: {
+  items: { label: string; count: number }[];
+  kind: "crime" | "311";
+}) {
+  const sentence = formatFlagSentence(items, kind);
+  if (!sentence) return null;
   return (
-    <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium border ${styles}`}>
-      {tier}
+    <span className="text-xs text-red-600 font-normal">
+      {sentence}
     </span>
   );
 }
@@ -227,12 +264,14 @@ function TierBadge({ tier }: { tier: "High" | "Moderate" | "Low" }) {
 function AnalysisCard({
   label,
   content,
-  tier,
+  flagItems,
+  flagKind,
   variant = "default",
 }: {
   label: string;
   content: string;
-  tier?: "High" | "Moderate" | "Low";
+  flagItems?: { label: string; count: number }[];
+  flagKind?: "crime" | "311";
   variant?: "default" | "verdict";
 }) {
   if (variant === "verdict") {
@@ -251,9 +290,13 @@ function AnalysisCard({
         <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">
           {label}
         </p>
-        {tier && <TierBadge tier={tier} />}
       </div>
       <p className="text-sm/6 text-gray-800 leading-relaxed">{content}</p>
+      {flagItems && flagKind && (
+        <p className="mt-3 text-xs text-red-600 border-t border-[#016B51]/20 pt-2">
+          {formatFlagSentence(flagItems, flagKind)}
+        </p>
+      )}
     </div>
   );
 }
@@ -771,16 +814,43 @@ export default function DashboardPage() {
 
                 <AnalysisCard label="Overall Verdict"       content={selectedAnalysis.data.overall_verdict} variant="verdict" />
 
-                <div className="grid grid-cols-1 gap-4">
-                  <AnalysisCard label="311 Service Requests"  content={selectedAnalysis.data.requests_311}     tier={selectedAnalysis.data.neighborhood_tiers?.complaints_311} />
-                  <AnalysisCard label="Crime & Safety"        content={selectedAnalysis.data.crime_safety}     tier={selectedAnalysis.data.neighborhood_tiers?.crime} />
-                  <AnalysisCard label="Property Mix"          content={selectedAnalysis.data.property_mix} />
-                  <AnalysisCard label="Building Permits"      content={selectedAnalysis.data.permit_activity} />
-                  <AnalysisCard label="Entertainment Scene"   content={selectedAnalysis.data.entertainment_scene} />
-                  <AnalysisCard label="Traffic Safety"        content={selectedAnalysis.data.traffic_safety} />
-                  <AnalysisCard label="Gun Violence"          content={selectedAnalysis.data.gun_violence} />
-                  <AnalysisCard label="Green Space"           content={selectedAnalysis.data.green_space} />
-                </div>
+                {(() => {
+                  const crimeFlagItems = (() => {
+                    const stat = selectedAnalysis.data.raw_stats?.find(s => s.section === "crime_safety");
+                    if (!stat || !Array.isArray(stat.data)) return [];
+                    const rows = stat.data as { offense: string; count: number }[];
+                    return [...SERIOUS_CRIME_TYPES].map(type => ({
+                      label: type
+                        .replace("ASSAULT - AGGRAVATED", "Aggravated Assault")
+                        .replace("THREATS TO DO BODILY HARM", "Threats to Do Bodily Harm")
+                        .replace("ROBBERY", "Robbery")
+                        .replace("DRUGS - POSSESSION/ SALE/ MANUFACTURING/ USE", "Drug Offenses")
+                        .replace("BURGLARY - RESIDENTIAL", "Residential Burglary"),
+                      count: rows.find(r => r.offense === type)?.count ?? 0,
+                    })).filter(i => i.count > 0);
+                  })();
+                  const flag311Items = (() => {
+                    const stat = selectedAnalysis.data.raw_stats?.find(s => s.section === "requests_311");
+                    if (!stat || !Array.isArray(stat.data)) return [];
+                    const rows = stat.data as { type: string; count: number }[];
+                    return [...SERIOUS_311_TYPES].map(type => ({
+                      label: type,
+                      count: rows.find(r => r.type === type)?.count ?? 0,
+                    })).filter(i => i.count > 0);
+                  })();
+                  return (
+                    <div className="grid grid-cols-1 gap-4">
+                      <AnalysisCard label="311 Service Requests"  content={selectedAnalysis.data.requests_311}  flagItems={flag311Items}  flagKind="311" />
+                      <AnalysisCard label="Crime & Safety"        content={selectedAnalysis.data.crime_safety}  flagItems={crimeFlagItems} flagKind="crime" />
+                      <AnalysisCard label="Property Mix"          content={selectedAnalysis.data.property_mix} />
+                      <AnalysisCard label="Building Permits"      content={selectedAnalysis.data.permit_activity} />
+                      <AnalysisCard label="Entertainment Scene"   content={selectedAnalysis.data.entertainment_scene} />
+                      <AnalysisCard label="Traffic Safety"        content={selectedAnalysis.data.traffic_safety} />
+                      <AnalysisCard label="Gun Violence"          content={selectedAnalysis.data.gun_violence} />
+                      <AnalysisCard label="Green Space"           content={selectedAnalysis.data.green_space} />
+                    </div>
+                  );
+                })()}
               </div>
             </div>
           </section>
