@@ -26,7 +26,7 @@
     --chart-1: oklch(0.75 0.08 175);  /* light sage/teal */
     --chart-2: oklch(0.62 0.09 170);  /* medium teal */
     --chart-3: oklch(0.55 0.10 168);  /* medium green */
-    --chart-4: oklch(0.46 0.10 165);  /* deep green ~ #016B51 */
+    --chart-4: oklch(0.42 0.12 260);  /* deep blue ~ #3A5AA5 */
     --chart-5: oklch(0.38 0.09 162);  /* darkest forest green */
     --radius: 0.625rem;
     --sidebar: oklch(0.985 0 0);
@@ -113,8 +113,8 @@
     --radius-2xl: calc(var(--radius) * 1.8);
     --radius-3xl: calc(var(--radius) * 2.2);
     --radius-4xl: calc(var(--radius) * 2.6);
-  --color-verdict: #F7E1D8;
-  --color-forest: #016B51;
+  --color-verdict: #F4EDDC;
+  --color-forest: #3A5AA5;
   @keyframes fadeSlideIn {
   to {
     opacity: 1;

@@ -276,7 +276,7 @@ function AnalysisCard({
 }) {
   if (variant === "verdict") {
     return (
-      <div className="rounded-xl bg-verdict/40 border border-[#016B51]/20 backdrop-blur-md p-4 col-span-1 sm:col-span-2">
+      <div className="rounded-xl bg-[#F5ECD8] border border-[#7B8DC5]/20 backdrop-blur-md p-4 col-span-1 sm:col-span-2">
         <p className="text-xs font-semibold uppercase tracking-wide text-gray-500 mb-2">
           {label}
         </p>
@@ -285,7 +285,7 @@ function AnalysisCard({
     );
   }
   return (
-    <div className="rounded-xl bg-white/10 border border-[#016B51]/20 backdrop-blur-md p-4">
+    <div className="rounded-xl bg-white/10 border border-[#7B8DC5]/20 backdrop-blur-md p-4">
       <div className="flex items-center gap-2 mb-2">
         <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">
           {label}
@@ -293,7 +293,7 @@ function AnalysisCard({
       </div>
       <p className="text-sm/6 text-gray-800 leading-relaxed">{content}</p>
       {flagItems && flagKind && (
-        <p className="mt-3 text-xs text-red-600 border-t border-[#016B51]/20 pt-2">
+        <p className="mt-3 text-xs text-red-600 border-t border-[#7B8DC5]/20 pt-2">
           {formatFlagSentence(flagItems, flagKind)}
         </p>
       )}
@@ -516,7 +516,7 @@ export default function DashboardPage() {
     <div
       className={`min-h-screen transition-[filter] duration-300 ${mapOpen ? "blur-sm pointer-events-none select-none" : ""}`}
       style={{
-        backgroundImage: "url('/images/login-hero.svg')",
+        backgroundImage: "url('/images/Linear_Blur_Background_Blue.svg')",
         backgroundSize: "cover",
         backgroundPosition: "center",
         backgroundRepeat: "no-repeat",
@@ -527,14 +527,12 @@ export default function DashboardPage() {
 
         {/* Form */}
         <section>
-          <div className="w-full rounded-xl bg-verdict/40 border border-[#016B51]/20 backdrop-blur-2xl p-6">
-            <h2 className="text-lg font-semibold text-gray-900 mb-4">Add a Search</h2>
+          <div className="w-full rounded-xl bg-[#F5ECD8] border border-[#7B8DC5]/20 backdrop-blur-2xl p-6">
+            <h2 className="text-lg font-semibold text-gray-900 mb-4">Select a Neighborhood</h2>
             <form onSubmit={handleSubmit} className="space-y-4">
 
-              {/* Row 1 — Location */}
+              {/* Row 1 — Neighborhood */}
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-
-                {/* Neighborhood listbox */}
                 <Listbox
                   value={neighborhood}
                   onChange={(n) => {
@@ -544,11 +542,11 @@ export default function DashboardPage() {
                 >
                   <div className="relative">
                     <Label className="block text-sm/6 font-medium text-gray-700">Neighborhood</Label>
-                    <ListboxButton className="mt-1 flex w-full items-center justify-between rounded-lg border border-[#016B51]/20 bg-white/10 px-3 py-1.5 text-sm/6 shadow-sm backdrop-blur-sm focus:outline-2 focus:-outline-offset-2 focus:outline-white/25">
-                      <span className={neighborhood ? "text-gray-900" : "text-gray-400"}>
+                    <ListboxButton className="mt-1 flex w-full items-center justify-between rounded-lg border border-[#5A73B5]/40 bg-white/10 px-3 py-1.5 text-sm/6 shadow-sm backdrop-blur-sm focus:outline-2 focus:-outline-offset-2 focus:outline-[#3A5AA5]/40">
+                      <span className={neighborhood ? "text-gray-900" : "text-[#5A73B5]/60"}>
                         {neighborhood?.label ?? "e.g. Back Bay"}
                       </span>
-                      <ChevronDown className="size-4 text-gray-400 shrink-0" aria-hidden="true" />
+                      <ChevronDown className="size-4 text-[#5A73B5]/60 shrink-0" aria-hidden="true" />
                     </ListboxButton>
                     <ListboxOptions
                       anchor="bottom"
@@ -567,8 +565,10 @@ export default function DashboardPage() {
                     </ListboxOptions>
                   </div>
                 </Listbox>
+              </div>
 
-                {/* Street combobox */}
+              {/* Row 2 — Street & Zip Code */}
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <Combobox
                   value={street}
                   onChange={(val: string | null) => {
@@ -591,7 +591,7 @@ export default function DashboardPage() {
                         setStreetInput(e.target.value);
                         setStreet("");
                       }}
-                      className="mt-1 block w-full rounded-lg border border-[#016B51]/20 bg-white/10 px-3 py-1.5 text-sm/6 text-gray-900 placeholder:text-gray-400 shadow-sm backdrop-blur-sm focus:outline-2 focus:-outline-offset-2 focus:outline-white/25 disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="mt-1 block w-full rounded-lg border border-[#5A73B5]/40 bg-white/10 px-3 py-1.5 text-sm/6 text-gray-900 placeholder:text-[#5A73B5]/60 shadow-sm backdrop-blur-sm focus:outline-2 focus:-outline-offset-2 focus:outline-[#3A5AA5]/40 disabled:border-[#A2A9D4]/30 disabled:cursor-not-allowed"
                     />
                     <ComboboxOptions
                       anchor="bottom"
@@ -617,7 +617,6 @@ export default function DashboardPage() {
                   </div>
                 </Combobox>
 
-                {/* Zip Code */}
                 <Field disabled={!neighborhood?.value}>
                   <Label className="block text-sm/6 font-medium text-gray-700">Zip Code</Label>
                   <div className="relative mt-1">
@@ -626,7 +625,7 @@ export default function DashboardPage() {
                       required
                       value={zipCode}
                       onChange={(e) => setZipCode(e.target.value)}
-                      className="block w-full appearance-none rounded-lg border border-[#016B51]/20 bg-white/10 px-3 py-1.5 text-sm/6 text-gray-900 shadow-sm backdrop-blur-sm focus:outline-2 focus:-outline-offset-2 focus:outline-white/25 disabled:opacity-50 disabled:cursor-not-allowed *:text-black"
+                      className="block w-full appearance-none rounded-lg border border-[#5A73B5]/40 bg-white/10 px-3 py-1.5 text-sm/6 text-gray-900 shadow-sm backdrop-blur-sm focus:outline-2 focus:-outline-offset-2 focus:outline-[#3A5AA5]/40 disabled:border-[#A2A9D4]/30 disabled:cursor-not-allowed *:text-black"
                     >
                       <option value="">
                         {neighborhood?.value ? "Select zip code" : "Select neighborhood first"}
@@ -635,7 +634,7 @@ export default function DashboardPage() {
                         <option key={zip} value={zip}>{zip}</option>
                       ))}
                     </Select>
-                    <ChevronDown className="pointer-events-none absolute top-2.5 right-2.5 size-4 text-gray-400" aria-hidden="true" />
+                    <ChevronDown className="pointer-events-none absolute top-2.5 right-2.5 size-4 text-[#5A73B5]/60" aria-hidden="true" />
                   </div>
                 </Field>
               </div>
@@ -653,14 +652,14 @@ export default function DashboardPage() {
                       id="householdType"
                       value={householdType}
                       onChange={(e) => setHouseholdType(e.target.value)}
-                      className="block w-full appearance-none rounded-lg border border-[#016B51]/20 bg-white/10 px-3 py-1.5 text-sm/6 text-gray-900 shadow-sm backdrop-blur-sm focus:outline-2 focus:-outline-offset-2 focus:outline-white/25 *:text-black"
+                      className="block w-full appearance-none rounded-lg border border-[#5A73B5]/40 bg-white/10 px-3 py-1.5 text-sm/6 text-gray-900 shadow-sm backdrop-blur-sm focus:outline-2 focus:-outline-offset-2 focus:outline-[#3A5AA5]/40 *:text-black"
                     >
                       <option value="">Select household type…</option>
                       {HOUSEHOLD_TYPES.map((h) => (
                         <option key={h.value} value={h.value}>{h.label}</option>
                       ))}
                     </Select>
-                    <ChevronDown className="pointer-events-none absolute top-2.5 right-2.5 size-4 text-gray-400" aria-hidden="true" />
+                    <ChevronDown className="pointer-events-none absolute top-2.5 right-2.5 size-4 text-[#5A73B5]/60" aria-hidden="true" />
                   </div>
                 </Field>
 
@@ -685,8 +684,8 @@ export default function DashboardPage() {
                           className={cn(
                             "rounded-full border backdrop-blur-sm transition-colors",
                             selected
-                              ? "bg-[#016B51]/10 border-[#016B51]/80 text-gray-900 hover:bg-[#016B51]/20"
-                              : "bg-white/10 border-[#016B51]/40 text-gray-700 hover:bg-white/20 hover:border-[#016B51]/60"
+                              ? "bg-[#3A5AA5]/10 border-[#3A5AA5]/80 text-gray-900 hover:bg-[#3A5AA5]/20"
+                              : "bg-white/10 border-[#5A73B5]/40 text-gray-700 hover:bg-white/20 hover:border-[#5A73B5]/60"
                           )}
                         >
                           {p}
@@ -702,7 +701,7 @@ export default function DashboardPage() {
               <Button
                 type="submit"
                 disabled={submitting}
-                className="inline-flex items-center gap-2 rounded-lg border border-[#016B51]/40 bg-white/10 px-4 py-1.5 text-sm/6 font-semibold text-gray-900 shadow-sm backdrop-blur-sm focus:not-data-focus:outline-none data-focus:outline-2 data-focus:outline-white/25 data-hover:bg-white/20 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                className="inline-flex items-center gap-2 rounded-lg border border-[#5A73B5]/40 bg-white/10 px-4 py-1.5 text-sm/6 font-semibold text-gray-900 shadow-sm backdrop-blur-sm focus:not-data-focus:outline-none data-focus:outline-2 data-focus:outline-white/25 data-hover:bg-white/20 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               >
                 {submitting ? "Analyzing…" : "Analyze & Save"}
               </Button>
@@ -713,7 +712,7 @@ export default function DashboardPage() {
         {/* Loading state */}
         {submitting && (
           <section>
-            <div className="w-full rounded-xl bg-white/10 border border-[#016B51]/20 backdrop-blur-2xl p-6">
+            <div className="w-full rounded-xl bg-white/10 border border-[#7B8DC5]/20 backdrop-blur-2xl p-6">
               <div className="space-y-6">
                 <div className="flex items-center gap-3">
                   <Spinner />
@@ -753,7 +752,7 @@ export default function DashboardPage() {
         {/* Analysis Report */}
         {selectedAnalysis && !submitting && (
           <section>
-            <div className="w-full rounded-xl bg-white/10 border border-[#016B51]/20 backdrop-blur-2xl p-6">
+            <div className="w-full rounded-xl bg-white/10 border border-[#7B8DC5]/20 backdrop-blur-2xl p-6">
               <div className="space-y-6">
                 <div>
                   <h2 className="text-lg font-semibold text-gray-900">Analysis Report</h2>
@@ -761,6 +760,8 @@ export default function DashboardPage() {
                     {selectedAnalysis.neighborhood} · {selectedAnalysis.street} · {selectedAnalysis.zip_code}
                   </p>
                 </div>
+
+                <AnalysisCard label="Overall Verdict"       content={selectedAnalysis.data.overall_verdict} variant="verdict" />
 
                 {(() => {
                   const crimeStat = selectedAnalysis.data.raw_stats?.find(
@@ -770,6 +771,7 @@ export default function DashboardPage() {
                   return (
                     <Stats03
                       data={crimeStat.data as { offense: string; count: number }[]}
+                      seriousTypes={SERIOUS_CRIME_TYPES}
                     />
                   );
                 })()}
@@ -777,7 +779,7 @@ export default function DashboardPage() {
                 <Button
                   type="button"
                   onClick={() => setMapOpen(true)}
-                  className="inline-flex items-center gap-2 rounded-lg border border-[#016B51]/40 bg-white/10 px-4 py-1.5 text-sm/6 font-semibold text-gray-900 shadow-sm backdrop-blur-sm focus:not-data-focus:outline-none data-focus:outline-2 data-focus:outline-white/25 data-hover:bg-white/20 transition-colors"
+                  className="inline-flex items-center gap-2 rounded-lg border border-[#5A73B5]/40 bg-[#F5ECD8] px-4 py-1.5 text-sm/6 font-semibold text-gray-900 shadow-sm backdrop-blur-sm focus:not-data-focus:outline-none data-focus:outline-2 data-focus:outline-white/25 data-hover:bg-[#F5ECD8]/80 transition-colors"
                 >
                   <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
                     <path fillRule="evenodd" d="M12 1.586l-4 4v12.828l4-4V1.586zM3.707 3.293A1 1 0 002 4v10a1 1 0 00.293.707L6 18.414V5.586L3.707 3.293zM17.707 5.293L14 1.586v12.828l2.293 2.293A1 1 0 0018 16V6a1 1 0 00-.293-.707z" clipRule="evenodd" />
@@ -807,12 +809,11 @@ export default function DashboardPage() {
                       <CardStat311
                         data={stats311.data as { type: string; count: number }[]}
                         total={stats311.total ?? 0}
+                        seriousTypes={SERIOUS_311_TYPES}
                       />
                     );
                   })()}
                 </div>
-
-                <AnalysisCard label="Overall Verdict"       content={selectedAnalysis.data.overall_verdict} variant="verdict" />
 
                 {(() => {
                   const crimeFlagItems = (() => {
@@ -840,13 +841,13 @@ export default function DashboardPage() {
                   })();
                   return (
                     <div className="grid grid-cols-1 gap-4">
-                      <AnalysisCard label="311 Service Requests"  content={selectedAnalysis.data.requests_311}  flagItems={flag311Items}  flagKind="311" />
                       <AnalysisCard label="Crime & Safety"        content={selectedAnalysis.data.crime_safety}  flagItems={crimeFlagItems} flagKind="crime" />
+                      <AnalysisCard label="311 Service Requests"  content={selectedAnalysis.data.requests_311}  flagItems={flag311Items}  flagKind="311" />
+                      <AnalysisCard label="Gun Violence"          content={selectedAnalysis.data.gun_violence} />
                       <AnalysisCard label="Property Mix"          content={selectedAnalysis.data.property_mix} />
+                      <AnalysisCard label="Traffic Safety"        content={selectedAnalysis.data.traffic_safety} />
                       <AnalysisCard label="Building Permits"      content={selectedAnalysis.data.permit_activity} />
                       <AnalysisCard label="Entertainment Scene"   content={selectedAnalysis.data.entertainment_scene} />
-                      <AnalysisCard label="Traffic Safety"        content={selectedAnalysis.data.traffic_safety} />
-                      <AnalysisCard label="Gun Violence"          content={selectedAnalysis.data.gun_violence} />
                       <AnalysisCard label="Green Space"           content={selectedAnalysis.data.green_space} />
                     </div>
                   );
@@ -871,7 +872,7 @@ export default function DashboardPage() {
                   onClick={() => handleCardClick(s)}
                   className={`rounded-lg border p-4 flex items-start justify-between cursor-pointer transition-colors backdrop-blur-md ${
                     selectedSearchId === s.id
-                      ? "bg-[#016B51]/10 border-[#016B51]/80"
+                      ? "bg-[#3A5AA5]/10 border-[#3A5AA5]/80"
                       : "bg-white/60 border-white/40 hover:bg-white/80"
                   }`}
                 >

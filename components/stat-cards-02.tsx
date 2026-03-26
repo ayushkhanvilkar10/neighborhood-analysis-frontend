@@ -2,12 +2,12 @@ import { Progress } from "@/components/ui/progress";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 const COLORS = [
-  "bg-[#8FC99A]",  /* light green */
-  "bg-[#4AADA8]",  /* teal — borderline green/blue */
-  "bg-[#2E8B72]",  /* mid forest green */
-  "bg-[#016B51]",  /* deep forest */
-  "bg-[#A3B842]",  /* olive/chartreuse — borderline green/yellow */
-  "bg-[#8FC99A]",  /* light green (repeat) */
+  "bg-[#3A5AA5]",
+  "bg-[#5A73B5]",
+  "bg-[#7B8DC5]",
+  "bg-[#A2A9D4]",
+  "bg-[#4A66AE]",
+  "bg-[#6980BE]",
 ];
 
 interface PropertyMixProps {
@@ -26,7 +26,7 @@ export default function CardStatPropertyMix({ data, total }: PropertyMixProps) {
 
   return (
     <div className="mx-auto md:w-[400px]">
-      <div className="rounded-xl bg-verdict/40 border border-[#016B51]/20 backdrop-blur-md p-4">
+      <div className="rounded-xl bg-[#F5ECD8] border border-[#7B8DC5]/20 backdrop-blur-md p-4">
         <div className="mb-4">
           <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">Property Mix</p>
           <p className="text-sm text-gray-600 mt-0.5">

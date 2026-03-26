@@ -61,7 +61,7 @@ function NavContent({
         href="/dashboard"
         className={`flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm/6 font-medium transition-colors ${
           isDashboard
-            ? "bg-[#016B51]/10 border border-[#016B51]/20 text-gray-900"
+            ? "bg-[#3A5AA5]/10 border border-[#3A5AA5]/20 text-gray-900"
             : "text-gray-600 hover:bg-white/20 hover:text-gray-900"
         }`}
       >
@@ -74,7 +74,7 @@ function NavContent({
         href="/chat"
         className={`flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm/6 font-medium transition-colors ${
           isChat
-            ? "bg-[#016B51]/10 border border-[#016B51]/20 text-gray-900"
+            ? "bg-[#3A5AA5]/10 border border-[#3A5AA5]/20 text-gray-900"
             : "text-gray-600 hover:bg-white/20 hover:text-gray-900"
         }`}
       >
@@ -87,7 +87,7 @@ function NavContent({
         <div className="mt-4 flex flex-col gap-1 flex-1 min-h-0">
           <button
             onClick={onNewChat}
-            className="flex items-center gap-2 w-full rounded-lg border border-[#016B51]/40 bg-white/10 px-3 py-1.5 text-sm/6 font-medium text-gray-900 backdrop-blur-sm hover:bg-white/20 transition-colors"
+            className="flex items-center gap-2 w-full rounded-lg border border-[#5A73B5]/40 bg-white/10 px-3 py-1.5 text-sm/6 font-medium text-gray-900 backdrop-blur-sm hover:bg-white/20 transition-colors"
           >
             <PlusCircle className="size-4 shrink-0" />
             New Chat
@@ -105,7 +105,7 @@ function NavContent({
                   onClick={() => onSelectSession(s.id)}
                   className={`w-full text-left rounded-lg px-3 py-2 transition-colors ${
                     activeChatSessionId === s.id
-                      ? "bg-[#016B51]/10 border border-[#016B51]/20"
+                      ? "bg-[#3A5AA5]/10 border border-[#3A5AA5]/20"
                       : "hover:bg-white/20"
                   }`}
                 >
@@ -121,7 +121,7 @@ function NavContent({
       )}
 
       {/* Sign out */}
-      <div className="mt-auto pt-4 border-t border-[#016B51]/10">
+      <div className="mt-auto pt-4 border-t border-[#A2A9D4]/20">
         <button
           onClick={onSignOut}
           className="text-sm/6 text-gray-500 hover:text-gray-900 transition-colors px-3"
@@ -218,12 +218,12 @@ export function AppNav() {
   return (
     <>
       {/* ── Desktop sidebar — always visible ── */}
-      <aside className="hidden lg:flex fixed left-0 top-0 h-screen w-56 flex-col bg-verdict/40 border-r border-[#016B51]/20 backdrop-blur-2xl z-40">
+      <aside className="hidden lg:flex fixed left-0 top-0 h-screen w-56 flex-col bg-[#F4EDDC] border-r border-[#7B8DC5]/20 z-40">
         <NavContent {...navProps} />
       </aside>
 
       {/* ── Mobile top bar + Sheet ── */}
-      <div className="lg:hidden fixed top-0 left-0 right-0 z-40 flex items-center px-4 py-3 bg-verdict/40 backdrop-blur-2xl border-b border-[#016B51]/20">
+      <div className="lg:hidden fixed top-0 left-0 right-0 z-40 flex items-center px-4 py-3 bg-[#F4EDDC] border-b border-[#7B8DC5]/20">
         <Sheet>
           <SheetTrigger asChild>
             <button className="p-1 rounded-lg text-gray-700 hover:bg-white/20 transition-colors" aria-label="Open menu">
@@ -233,7 +233,7 @@ export function AppNav() {
           <SheetContent
             side="left"
             showCloseButton={true}
-            className="w-full bg-verdict/60 backdrop-blur-2xl border-r border-[#016B51]/20 p-0"
+            className="w-full bg-[#F4EDDC] border-r border-[#7B8DC5]/20 p-0"
           >
             <SheetTitle className="sr-only">Navigation Menu</SheetTitle>
             <NavContent {...navProps} />
