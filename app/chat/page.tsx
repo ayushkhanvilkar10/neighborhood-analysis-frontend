@@ -238,7 +238,7 @@ function ChatPageInner() {
   return (
     <div className="h-[calc(100vh-3.5rem)] lg:h-screen flex flex-col"
       style={{
-        backgroundImage:      "url('/images/Linear_Blur_Background_Blue.svg')",
+        backgroundImage:      "url('/images/Linear_Blur_Background_Blue_minimal.svg')",
         backgroundSize:       "cover",
         backgroundPosition:   "center",
         backgroundRepeat:     "no-repeat",
@@ -266,7 +266,7 @@ function ChatPageInner() {
                   <button
                     key={label}
                     onClick={() => handleSend(prompt)}
-                    className="rounded-xl bg-verdict/40 border border-[#7B8DC5]/20 backdrop-blur-md px-4 py-3 text-left hover:bg-verdict/60 hover:border-[#5A73B5]/40 transition-colors group"
+                    className="rounded-xl bg-[#F5ECD8] border border-[#7B8DC5]/20 backdrop-blur-md px-4 py-3 text-left hover:bg-[#F5ECD8]/80 hover:border-[#5A73B5]/40 transition-colors group"
                   >
                     <p className="text-xs font-semibold uppercase tracking-wide text-gray-500 group-hover:text-[#3A5AA5] transition-colors">{label}</p>
                     <p className="text-sm text-gray-700 mt-0.5 leading-snug">{prompt}</p>
@@ -297,7 +297,7 @@ function ChatPageInner() {
                 className={`max-w-xl rounded-2xl px-4 py-3 text-sm leading-relaxed ${
                   msg.role === "human"
                     ? "bg-[#3A5AA5] text-white rounded-br-sm"
-                    : "bg-white/20 border border-[#7B8DC5]/20 backdrop-blur-md text-gray-800 rounded-bl-sm"
+                    : "bg-white/10 border border-[#7B8DC5]/20 backdrop-blur-md text-gray-800 rounded-bl-sm"
                 }`}
               >
                 {msg.role === "human" ? (
@@ -328,7 +328,7 @@ function ChatPageInner() {
 
           {sending && !messages.some((m) => m.id === "streaming") && (
             <div className="flex justify-start">
-              <div className="max-w-xl rounded-2xl px-4 py-3 bg-white/20 border border-[#7B8DC5]/20 backdrop-blur-md rounded-bl-sm">
+              <div className="max-w-xl rounded-2xl px-4 py-3 bg-white/10 border border-[#7B8DC5]/20 backdrop-blur-md rounded-bl-sm">
                 <TextShimmerLoader text="Thinking..." />
               </div>
             </div>
@@ -338,7 +338,7 @@ function ChatPageInner() {
         </div>
 
         {/* ── Input bar — always visible ── */}
-        <div className="flex-shrink-0 border-t border-[#7B8DC5]/20 bg-verdict/40 backdrop-blur-xl px-6 py-4">
+        <div className="flex-shrink-0 border-t border-[#7B8DC5]/20 bg-[#F5ECD8] backdrop-blur-xl px-6 py-4">
           <div className="flex items-end gap-3">
             <textarea
               rows={1}
@@ -347,12 +347,12 @@ function ChatPageInner() {
               onKeyDown={handleKeyDown}
               disabled={sending}
               placeholder="Ask about Boston neighborhoods…"
-              className="flex-1 resize-none rounded-xl border border-[#7B8DC5]/20 bg-white/10 px-4 py-2.5 text-sm/6 text-gray-900 placeholder:text-gray-400 shadow-sm backdrop-blur-sm focus:outline-2 focus:-outline-offset-2 focus:outline-white/25 disabled:opacity-50"
+              className="flex-1 resize-none rounded-xl border border-[#5A73B5]/40 bg-white/10 px-4 py-2.5 text-sm/6 text-gray-900 placeholder:text-[#5A73B5]/60 shadow-sm backdrop-blur-sm focus:outline-2 focus:-outline-offset-2 focus:outline-[#3A5AA5]/40 disabled:opacity-50"
             />
             <button
               onClick={() => handleSend()}
               disabled={sending || !input.trim()}
-              className="inline-flex items-center rounded-lg border border-[#5A73B5]/40 bg-white/10 px-4 py-2.5 text-sm/6 font-semibold text-gray-900 backdrop-blur-sm hover:bg-white/20 disabled:opacity-50 transition-colors"
+              className="inline-flex items-center rounded-lg border border-[#5A73B5]/40 bg-white/10 px-4 py-2.5 text-sm/6 font-semibold text-gray-900 backdrop-blur-sm hover:bg-[#F5ECD8]/80 disabled:opacity-50 transition-colors"
             >
               {sending ? "…" : "Send"}
             </button>

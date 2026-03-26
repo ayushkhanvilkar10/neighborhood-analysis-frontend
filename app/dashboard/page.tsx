@@ -291,7 +291,7 @@ function AnalysisCard({
           {label}
         </p>
       </div>
-      <p className="text-sm/6 text-gray-800 leading-relaxed">{content}</p>
+      <p className="text-sm/6 text-gray-800 leading-relaxed font-medium">{content}</p>
       {flagItems && flagKind && (
         <p className="mt-3 text-xs text-red-600 border-t border-[#7B8DC5]/20 pt-2">
           {formatFlagSentence(flagItems, flagKind)}
@@ -516,7 +516,7 @@ export default function DashboardPage() {
     <div
       className={`min-h-screen transition-[filter] duration-300 ${mapOpen ? "blur-sm pointer-events-none select-none" : ""}`}
       style={{
-        backgroundImage: "url('/images/Linear_Blur_Background_Blue.svg')",
+        backgroundImage: "url('/images/Linear_Blur_Background_Blue_minimal.svg')",
         backgroundSize: "cover",
         backgroundPosition: "center",
         backgroundRepeat: "no-repeat",
