@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Button, Combobox, ComboboxInput, ComboboxOption, ComboboxOptions, Field, Label, Listbox, ListboxButton, ListboxOption, ListboxOptions, Select } from "@headlessui/react";
 import { ChevronDown } from "lucide-react";
 import { useRouter } from "next/navigation";
@@ -79,11 +79,11 @@ const NEIGHBORHOODS: { label: string; value: string }[] = [
 // Household type options (dropdown)
 // ─────────────────────────────────────────────
 const HOUSEHOLD_TYPES: { label: string; value: string }[] = [
-  { label: "Living solo",           value: "single" },
-  { label: "Couple / Partner",      value: "partner" },
-  { label: "Family with kids",      value: "family" },
-  { label: "Retiree / Empty nester", value: "retiree" },
-  { label: "Investor",              value: "investor" },
+  { label: "Living solo",            value: "Living solo" },
+  { label: "Couple / Partner",       value: "Couple / Partner" },
+  { label: "Family with kids",       value: "Family with kids" },
+  { label: "Retiree / Empty nester", value: "Retiree / Empty nester" },
+  { label: "Investor",               value: "Investor" },
 ];
 
 // ─────────────────────────────────────────────
@@ -328,6 +328,9 @@ export default function DashboardPage() {
   const [formError, setFormError]     = useState<string | null>(null);
   const [mapOpen, setMapOpen]         = useState(false);
 
+  // Prevents auto-save from firing while we load preferences from the API
+  const prefsLoaded = useRef(false);
+
   useEffect(() => {
     if (!mapOpen) return;
     const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") setMapOpen(false); };
@@ -381,6 +384,45 @@ export default function DashboardPage() {
   }, [streetInput, neighborhood]);
 
 
+  // ─────────────────────────────────────────────
+  // Preferences: fetch on load, auto-save on change
+  // ─────────────────────────────────────────────
+
+  async function fetchPreferences(s: Session) {
+    try {
+      const res = await fetch(`${API_URL}/preferences`, { headers: authHeaders(s) });
+      if (!res.ok) return;
+      const data = await res.json();
+      if (data.household_type)       setHouseholdType(data.household_type);
+      if (data.property_preferences?.length) setPropertyPrefs(data.property_preferences);
+    } catch { /* silently ignore */ }
+    finally { prefsLoaded.current = true; }
+  }
+
+  async function savePreferences(s: Session, ht: string, pp: string[]) {
+    try {
+      await fetch(`${API_URL}/preferences`, {
+        method: "PUT",
+        headers: authHeaders(s),
+        body: JSON.stringify({
+          household_type: ht || null,
+          property_preferences: pp.length > 0 ? pp : null,
+        }),
+      });
+    } catch { /* silently ignore */ }
+  }
+
+  // Auto-save when household type changes
+  useEffect(() => {
+    if (!prefsLoaded.current || !session) return;
+    savePreferences(session, householdType, propertyPrefs);
+  }, [householdType]);
+
+  // Auto-save when property preferences change
+  useEffect(() => {
+    if (!prefsLoaded.current || !session) return;
+    savePreferences(session, householdType, propertyPrefs);
+  }, [propertyPrefs]);
 
 
   // Auto-select the most recent search with analysis on load
@@ -402,6 +444,7 @@ export default function DashboardPage() {
       if (!session) { router.replace("/login"); return; }
       setSession(session);
       fetchSearches(session, true);
+      fetchPreferences(session);
     });
   }, [router]);
 
@@ -460,12 +503,10 @@ export default function DashboardPage() {
         throw new Error(body?.detail ?? "Failed to save search");
       }
 
-      // Reset form
+      // Reset location fields only — preferences persist
       setNeighborhood(null);
       setStreetInput("");       setStreet("");
       setZipCode("");
-      setHouseholdType("");
-      setPropertyPrefs([]);
 
       // Refresh list — auto-select the newest (index 0 after DESC sort)
       await fetchSearches(session, true);
