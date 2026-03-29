@@ -238,7 +238,7 @@ function ChatPageInner() {
   return (
     <div className="h-[calc(100vh-3.5rem)] lg:h-screen flex flex-col"
       style={{
-        backgroundImage:      "url('/images/Linear_Blur_Background_Blue_minimal.svg')",
+        backgroundImage:      "url('/images/Linear_Blur_Background_Blue_opacity_75.svg')",
         backgroundSize:       "cover",
         backgroundPosition:   "center",
         backgroundRepeat:     "no-repeat",

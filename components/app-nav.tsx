@@ -145,8 +145,11 @@ export function AppNav() {
   const [chatSessions,    setChatSessions]     = useState<ChatSession[]>([]);
   const [loadingSessions, setLoadingSessions]  = useState(false);
   const [activeChatSessionId, setActiveChatSessionId] = useState<string | null>(null);
+  const [mounted, setMounted] = useState(false);
 
   const isChat = pathname === "/chat";
+
+  useEffect(() => setMounted(true), []);
 
   // ── Auth ──
   useEffect(() => {
@@ -224,21 +227,23 @@ export function AppNav() {
 
       {/* ── Mobile top bar + Sheet ── */}
       <div className="lg:hidden fixed top-0 left-0 right-0 z-40 flex items-center px-4 py-3 bg-[#F4EDDC] border-b border-[#7B8DC5]/20">
-        <Sheet>
-          <SheetTrigger asChild>
-            <button className="p-1 rounded-lg text-gray-700 hover:bg-white/20 transition-colors" aria-label="Open menu">
-              <Menu className="size-5" />
-            </button>
-          </SheetTrigger>
-          <SheetContent
-            side="left"
-            showCloseButton={true}
-            className="w-full bg-[#F4EDDC] border-r border-[#7B8DC5]/20 p-0"
-          >
-            <SheetTitle className="sr-only">Navigation Menu</SheetTitle>
-            <NavContent {...navProps} />
-          </SheetContent>
-        </Sheet>
+        {mounted && (
+          <Sheet>
+            <SheetTrigger asChild>
+              <button className="p-1 rounded-lg text-gray-700 hover:bg-white/20 transition-colors" aria-label="Open menu">
+                <Menu className="size-5" />
+              </button>
+            </SheetTrigger>
+            <SheetContent
+              side="left"
+              showCloseButton={true}
+              className="w-full bg-[#F4EDDC] border-r border-[#7B8DC5]/20 p-0"
+            >
+              <SheetTitle className="sr-only">Navigation Menu</SheetTitle>
+              <NavContent {...navProps} />
+            </SheetContent>
+          </Sheet>
+        )}
         <span style={{ fontFamily: 'var(--font-nanum-myeongjo)' }} className="ml-3 text-sm font-bold text-gray-900">The Hunt</span>
       </div>
     </>

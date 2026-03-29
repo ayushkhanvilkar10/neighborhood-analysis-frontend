@@ -1,0 +1,135 @@
+export const BOSTON_API = "https://data.boston.gov/api/3/action/datastore_search_sql";
+export const CRIME_DATASET = "b973d8cb-eeb2-4e7e-99da-c92938efc9c0";
+
+export const NEIGHBORHOOD_COORDINATES: Record<string, { latitude: number; longitude: number; zoom: number }> = {
+  "Allston":                                        { latitude: 42.3539, longitude: -71.1337, zoom: 14 },
+  "Allston / Brighton":                             { latitude: 42.3517, longitude: -71.1500, zoom: 13.5 },
+  "Back Bay":                                       { latitude: 42.3503, longitude: -71.0810, zoom: 14.5 },
+  "Beacon Hill":                                    { latitude: 42.3588, longitude: -71.0707, zoom: 15 },
+  "Brighton":                                       { latitude: 42.3464, longitude: -71.1627, zoom: 14 },
+  "Charlestown":                                    { latitude: 42.3782, longitude: -71.0602, zoom: 14.5 },
+  "Dorchester":                                     { latitude: 42.3016, longitude: -71.0674, zoom: 13 },
+  "Downtown / Financial District":                  { latitude: 42.3555, longitude: -71.0565, zoom: 15 },
+  "East Boston":                                    { latitude: 42.3702, longitude: -71.0389, zoom: 14 },
+  "Fenway / Kenmore / Audubon Circle / Longwood":   { latitude: 42.3429, longitude: -71.1003, zoom: 14 },
+  "Greater Mattapan":                               { latitude: 42.2677, longitude: -71.0934, zoom: 14 },
+  "Hyde Park":                                      { latitude: 42.2565, longitude: -71.1245, zoom: 13.5 },
+  "Jamaica Plain":                                  { latitude: 42.3098, longitude: -71.1144, zoom: 14 },
+  "Mattapan":                                       { latitude: 42.2770, longitude: -71.0912, zoom: 14 },
+  "Mission Hill":                                   { latitude: 42.3297, longitude: -71.1060, zoom: 15 },
+  "Roslindale":                                     { latitude: 42.2837, longitude: -71.1270, zoom: 14 },
+  "Roxbury":                                        { latitude: 42.3152, longitude: -71.0886, zoom: 14 },
+  "South Boston":                                   { latitude: 42.3381, longitude: -71.0476, zoom: 14 },
+  "South Boston / South Boston Waterfront":         { latitude: 42.3420, longitude: -71.0400, zoom: 13.5 },
+  "South End":                                      { latitude: 42.3424, longitude: -71.0713, zoom: 15 },
+  "West Roxbury":                                   { latitude: 42.2798, longitude: -71.1581, zoom: 13.5 },
+};
+
+export const NEIGHBORHOODS: { label: string; value: string }[] = [
+  { label: "Allston",                   value: "Allston" },
+  { label: "Allston / Brighton",        value: "Allston / Brighton" },
+  { label: "Back Bay",                  value: "Back Bay" },
+  { label: "Beacon Hill",               value: "Beacon Hill" },
+  { label: "Brighton",                  value: "Brighton" },
+  { label: "Charlestown",               value: "Charlestown" },
+  { label: "Dorchester",                value: "Dorchester" },
+  { label: "Downtown",                  value: "Downtown / Financial District" },
+  { label: "Financial District",        value: "Downtown / Financial District" },
+  { label: "East Boston",               value: "East Boston" },
+  { label: "Fenway",                    value: "Fenway / Kenmore / Audubon Circle / Longwood" },
+  { label: "Kenmore",                   value: "Fenway / Kenmore / Audubon Circle / Longwood" },
+  { label: "Audubon Circle",            value: "Fenway / Kenmore / Audubon Circle / Longwood" },
+  { label: "Longwood",                  value: "Fenway / Kenmore / Audubon Circle / Longwood" },
+  { label: "Greater Mattapan",          value: "Greater Mattapan" },
+  { label: "Hyde Park",                 value: "Hyde Park" },
+  { label: "Jamaica Plain",             value: "Jamaica Plain" },
+  { label: "Mattapan",                  value: "Mattapan" },
+  { label: "Mission Hill",              value: "Mission Hill" },
+  { label: "Roslindale",                value: "Roslindale" },
+  { label: "Roxbury",                   value: "Roxbury" },
+  { label: "South Boston",              value: "South Boston" },
+  { label: "South Boston Waterfront",   value: "South Boston / South Boston Waterfront" },
+  { label: "South End",                 value: "South End" },
+  { label: "West Roxbury",              value: "West Roxbury" },
+];
+
+export const HOUSEHOLD_TYPES: { label: string; value: string }[] = [
+  { label: "Living solo",            value: "Living solo" },
+  { label: "Couple / Partner",       value: "Couple / Partner" },
+  { label: "Family with kids",       value: "Family with kids" },
+  { label: "Retiree / Empty nester", value: "Retiree / Empty nester" },
+  { label: "Investor",               value: "Investor" },
+];
+
+export const PROPERTY_TYPES: string[] = [
+  "Condo",
+  "Single Family",
+  "Two / Three Family",
+  "Small Apartment",
+  "Mid-Size Apartment",
+  "Mixed Use",
+];
+
+export const NEIGHBORHOOD_TO_DISTRICT: Record<string, string> = {
+  "Allston":                                        "D14",
+  "Allston / Brighton":                             "D14",
+  "Back Bay":                                       "D4",
+  "Beacon Hill":                                    "A1",
+  "Brighton":                                       "D14",
+  "Charlestown":                                    "A15",
+  "Dorchester":                                     "C11",
+  "Downtown / Financial District":                  "A1",
+  "East Boston":                                    "A7",
+  "Fenway / Kenmore / Audubon Circle / Longwood":   "D4",
+  "Greater Mattapan":                               "B3",
+  "Hyde Park":                                      "E18",
+  "Jamaica Plain":                                  "E13",
+  "Mattapan":                                       "B3",
+  "Mission Hill":                                   "E13",
+  "Roslindale":                                     "E13",
+  "Roxbury":                                        "B2",
+  "South Boston":                                   "C6",
+  "South Boston / South Boston Waterfront":         "C6",
+  "South End":                                      "D4",
+  "West Roxbury":                                   "E5",
+};
+
+export const NEIGHBORHOOD_ZIP_CODES: Record<string, string[]> = {
+  "Allston":                                        ["02134"],
+  "Allston / Brighton":                             ["02134", "02135"],
+  "Back Bay":                                       ["02116", "02199"],
+  "Beacon Hill":                                    ["02108", "02114"],
+  "Brighton":                                       ["02135"],
+  "Charlestown":                                    ["02129"],
+  "Dorchester":                                     ["02121", "02122", "02124", "02125"],
+  "Downtown / Financial District":                  ["02109", "02110", "02113", "02201"],
+  "East Boston":                                    ["02128"],
+  "Fenway / Kenmore / Audubon Circle / Longwood":   ["02115", "02215"],
+  "Greater Mattapan":                               ["02126"],
+  "Hyde Park":                                      ["02136", "02137"],
+  "Jamaica Plain":                                  ["02130"],
+  "Mattapan":                                       ["02126"],
+  "Mission Hill":                                   ["02120"],
+  "Roslindale":                                     ["02131"],
+  "Roxbury":                                        ["02119"],
+  "South Boston":                                   ["02127"],
+  "South Boston / South Boston Waterfront":         ["02127", "02210"],
+  "South End":                                      ["02111", "02118"],
+  "West Roxbury":                                   ["02132"],
+};
+
+export const SERIOUS_CRIME_TYPES = new Set([
+  "ASSAULT - AGGRAVATED",
+  "THREATS TO DO BODILY HARM",
+  "ROBBERY",
+  "DRUGS - POSSESSION/ SALE/ MANUFACTURING/ USE",
+  "BURGLARY - RESIDENTIAL",
+]);
+
+export const SERIOUS_311_TYPES = new Set([
+  "CE Collection",
+  "Needle Pickup",
+  "Encampments",
+  "Heat - Excessive  Insufficient",
+  "Unsatisfactory Living Conditions",
+]);
