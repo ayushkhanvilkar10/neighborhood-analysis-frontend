@@ -59,7 +59,7 @@ export function AnalysisReport({
             </p>
           </div>
 
-          <AnalysisCard label="Overall Verdict" content={analysis.data.overall_verdict} variant="verdict" />
+          <AnalysisCard label="Overall Verdict" content={analysis.data.overall_verdict} recommendation={analysis.data.closing_recommendation} variant="verdict" />
 
           {crimeStat && Array.isArray(crimeStat.data) && (
             <Stats03

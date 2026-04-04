@@ -21,12 +21,14 @@ export function AnalysisCard({
   content,
   flagItems,
   flagKind,
+  recommendation,
   variant = "default",
 }: {
   label: string;
   content: string;
   flagItems?: { label: string; count: number }[];
   flagKind?: "crime" | "311";
+  recommendation?: string;
   variant?: "default" | "verdict";
 }) {
   if (variant === "verdict") {
@@ -35,7 +37,12 @@ export function AnalysisCard({
         <p className="text-xs font-semibold uppercase tracking-wide text-gray-500 mb-2">
           {label}
         </p>
-        <p className="text-sm/6 text-gray-900 font-medium">{content}</p>
+        <p className="text-sm/6 text-gray-900 font-medium">
+          {content}
+          {recommendation && (
+            <>{" "}<span className="bg-[#649E97]/15 rounded-sm px-0.5 box-decoration-clone">{recommendation}</span></>
+          )}
+        </p>
       </div>
     );
   }

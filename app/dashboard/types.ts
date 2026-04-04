@@ -10,17 +10,18 @@ export interface NeighborhoodTiers {
 }
 
 export interface AnalysisData {
-  requests_311:        string;
-  crime_safety:        string;
-  property_mix:        string;
-  permit_activity:     string;
-  entertainment_scene: string;
-  traffic_safety:      string;
-  gun_violence:        string;
-  green_space:         string;
-  overall_verdict:     string;
-  raw_stats:           RawStatEntry[];
-  neighborhood_tiers:  NeighborhoodTiers | null;
+  requests_311:           string;
+  crime_safety:           string;
+  property_mix:           string;
+  permit_activity:        string;
+  entertainment_scene:    string;
+  traffic_safety:         string;
+  gun_violence:           string;
+  green_space:            string;
+  overall_verdict:        string;
+  closing_recommendation: string;
+  raw_stats:              RawStatEntry[];
+  neighborhood_tiers:     NeighborhoodTiers | null;
 }
 
 export interface Search {
