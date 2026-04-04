@@ -31,7 +31,7 @@ export function AnalysisCard({
 }) {
   if (variant === "verdict") {
     return (
-      <div className="rounded-xl bg-[#F5ECD8] border border-[#7B8DC5]/20 backdrop-blur-md p-4 col-span-1 sm:col-span-2">
+      <div className="rounded-xl bg-white border border-[#649E97]/25 p-4 col-span-1 sm:col-span-2">
         <p className="text-xs font-semibold uppercase tracking-wide text-gray-500 mb-2">
           {label}
         </p>
@@ -40,7 +40,7 @@ export function AnalysisCard({
     );
   }
   return (
-    <div className="rounded-xl bg-[#F5ECD8] border border-[#7B8DC5]/20 backdrop-blur-md p-4">
+    <div className="rounded-xl bg-white border border-[#649E97]/25 p-4">
       <div className="flex items-center gap-2 mb-2">
         <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">
           {label}
@@ -48,7 +48,7 @@ export function AnalysisCard({
       </div>
       <p className="text-sm/6 text-gray-800 leading-relaxed font-medium">{content}</p>
       {flagItems && flagKind && (
-        <p className="mt-3 text-xs text-red-600 border-t border-[#7B8DC5]/20 pt-2">
+        <p className="mt-3 text-xs text-red-600 border-t border-[#649E97]/20 pt-2">
           {formatFlagSentence(flagItems, flagKind)}
         </p>
       )}

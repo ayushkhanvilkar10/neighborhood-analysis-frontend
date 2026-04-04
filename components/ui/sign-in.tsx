@@ -17,7 +17,7 @@ interface SignInPageProps {
 }
 
 const GlassInputWrapper = ({ children }: { children: React.ReactNode }) => (
-  <div className="rounded-2xl border border-border bg-foreground/5 backdrop-blur-sm transition-colors focus-within:border-[#3A5AA5]/70 focus-within:bg-[#3A5AA5]/10">
+  <div className="rounded-2xl border border-[#649E97]/35 bg-[#F8FBFA] transition-colors focus-within:border-[#006B4E]/70 focus-within:bg-[#006B4E]/5">
     {children}
   </div>
 );
@@ -49,7 +49,7 @@ export const SignInPage: React.FC<SignInPageProps> = ({
     <div className="h-[100dvh] flex flex-col md:flex-row font-geist w-[100dvw]">
       <section className="flex-1 flex items-center justify-center p-8">
         <div className="w-full max-w-md">
-          <div className="flex flex-col gap-6 rounded-xl bg-white/10 border border-[#7B8DC5]/20 backdrop-blur-md p-8">
+          <div className="flex flex-col gap-6 rounded-xl bg-white/75 border border-[#649E97]/25 backdrop-blur-sm p-8">
             <h1 className="animate-element animate-delay-100 text-4xl md:text-5xl font-semibold leading-tight">
               {title || defaultTitle}
             </h1>
@@ -83,7 +83,7 @@ export const SignInPage: React.FC<SignInPageProps> = ({
               <button
                 type="submit"
                 disabled={loading}
-                className="animate-element animate-delay-500 w-full rounded-2xl bg-primary py-4 font-medium text-primary-foreground hover:bg-primary/90 transition-colors disabled:opacity-50"
+                className="animate-element animate-delay-500 w-full rounded-2xl bg-[#006B4E] py-4 font-medium text-white hover:bg-[#006B4E]/90 transition-colors disabled:opacity-50"
               >
                 {loading ? 'Loading…' : isSignUp ? 'Create Account' : 'Sign In'}
               </button>
@@ -91,9 +91,9 @@ export const SignInPage: React.FC<SignInPageProps> = ({
 
             <p className="animate-element animate-delay-600 text-center text-sm text-muted-foreground">
               {isSignUp ? (
-                <>Already have an account?{' '}<a href="#" onClick={(e) => { e.preventDefault(); onToggleMode?.(); }} className="text-[#3A5AA5] hover:underline transition-colors">Sign In</a></>
+                <>Already have an account?{' '}<a href="#" onClick={(e) => { e.preventDefault(); onToggleMode?.(); }} className="text-[#006B4E] hover:underline transition-colors">Sign In</a></>
               ) : (
-                <>New to our platform?{' '}<a href="#" onClick={(e) => { e.preventDefault(); onToggleMode?.(); }} className="text-[#3A5AA5] hover:underline transition-colors">Create Account</a></>
+                <>New to our platform?{' '}<a href="#" onClick={(e) => { e.preventDefault(); onToggleMode?.(); }} className="text-[#006B4E] hover:underline transition-colors">Create Account</a></>
               )}
             </p>
           </div>

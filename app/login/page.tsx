@@ -48,9 +48,17 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="bg-background text-foreground">
+    <div
+      className="text-foreground"
+      style={{
+        backgroundImage: "url('/images/Login_Page_Background.svg')",
+        backgroundSize: "cover",
+        backgroundPosition: "center",
+        backgroundRepeat: "no-repeat",
+      }}
+    >
       <SignInPage
-        heroImageSrc="/images/login-hero.svg"
+        heroImageSrc="/images/Login_Hero_Green_Gradient_Background.svg"
         mode={mode}
         onSubmit={handleSubmit}
         onToggleMode={handleToggleMode}

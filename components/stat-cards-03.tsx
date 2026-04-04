@@ -12,7 +12,7 @@ interface CardStat311Props {
 export default function CardStat311({ data, total, seriousTypes }: CardStat311Props) {
   return (
     <div className="mx-auto md:w-[400px]">
-      <div className="rounded-xl bg-[#F5ECD8] border border-[#7B8DC5]/20 backdrop-blur-md p-4">
+        <div className="rounded-xl bg-white border border-[#649E97]/25 p-4">
         <div className="mb-4">
           <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">311 Service Requests</p>
           <p className="text-sm text-gray-600 mt-0.5">
@@ -28,7 +28,7 @@ export default function CardStat311({ data, total, seriousTypes }: CardStat311Pr
                   className={`relative overflow-hidden min-w-12 rounded-md px-2 py-1 text-center text-xs ${
                     isSerious
                       ? "border border-red-400/70 text-red-600 font-semibold"
-                      : "bg-white/20 text-gray-700"
+                      : "bg-[#649E97]/10 text-gray-700"
                   }`}
                 >
                   {isSerious && (

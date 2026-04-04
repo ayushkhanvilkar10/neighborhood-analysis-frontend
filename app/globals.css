@@ -114,7 +114,7 @@
     --radius-3xl: calc(var(--radius) * 2.2);
     --radius-4xl: calc(var(--radius) * 2.6);
   --color-verdict: #F4EDDC;
-  --color-forest: #3A5AA5;
+  --color-forest: #006B4E;
   @keyframes fadeSlideIn {
   to {
     opacity: 1;

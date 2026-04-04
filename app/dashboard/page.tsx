@@ -279,7 +279,7 @@ export default function DashboardPage() {
     <div
       className={`min-h-screen transition-[filter] duration-300 ${mapOpen ? "blur-sm pointer-events-none select-none" : ""}`}
       style={{
-        backgroundImage: "url('/images/Linear_Blur_Background_Blue_opacity_75.svg')",
+        backgroundImage: "url('/images/Green_Gradient_Background.svg')",
         backgroundSize: "cover",
         backgroundPosition: "center",
         backgroundRepeat: "no-repeat",
@@ -290,7 +290,7 @@ export default function DashboardPage() {
 
         {/* Form */}
         <section>
-          <div className="w-full rounded-xl bg-[#F5ECD8] border border-[#7B8DC5]/20 backdrop-blur-2xl p-6">
+          <div className="w-full rounded-xl bg-white border border-[#649E97]/25 p-6">
             <h2 className="text-lg font-semibold text-gray-900 mb-4">Select a Neighborhood</h2>
             <form onSubmit={handleSubmit} className="space-y-4">
 
@@ -305,22 +305,22 @@ export default function DashboardPage() {
                 >
                   <div className="relative">
                     <Label className="block text-sm/6 font-medium text-gray-700">Neighborhood</Label>
-                    <ListboxButton className="mt-1 flex w-full items-center justify-between rounded-lg border border-[#5A73B5]/40 bg-white/10 px-3 py-1.5 text-sm/6 shadow-sm backdrop-blur-sm focus:outline-2 focus:-outline-offset-2 focus:outline-[#3A5AA5]/40">
-                      <span className={neighborhood ? "text-gray-900" : "text-[#5A73B5]/60"}>
+                    <ListboxButton className="mt-1 flex w-full items-center justify-between rounded-lg border border-[#649E97]/35 bg-[#F8FBFA] px-3 py-1.5 text-sm/6 shadow-sm backdrop-blur-sm focus:outline-2 focus:-outline-offset-2 focus:outline-[#006B4E]/40">
+                      <span className={neighborhood ? "text-gray-900" : "text-[#649E97]/60"}>
                         {neighborhood?.label ?? "e.g. Back Bay"}
                       </span>
-                      <ChevronDown className="size-4 text-[#5A73B5]/60 shrink-0" aria-hidden="true" />
+                      <ChevronDown className="size-4 text-[#649E97]/60 shrink-0" aria-hidden="true" />
                     </ListboxButton>
                     <ListboxOptions
                       anchor="bottom"
                       transition
-                      className="z-40 w-(--input-width) rounded-xl border border-white/10 bg-white/10 backdrop-blur-xl p-1 [--anchor-gap:--spacing(1)] empty:invisible transition duration-100 ease-in data-leave:data-closed:opacity-0 shadow-lg max-h-56 overflow-auto"
+                      className="z-40 w-(--input-width) rounded-xl border border-[#649E97]/15 bg-white p-1 [--anchor-gap:--spacing(1)] empty:invisible transition duration-100 ease-in data-leave:data-closed:opacity-0 shadow-lg max-h-56 overflow-auto"
                     >
                       {NEIGHBORHOODS.map((n) => (
                         <ListboxOption
                           key={n.label}
                           value={n}
-                          className="group flex cursor-default select-none items-center rounded-lg px-3 py-1.5 text-sm/6 text-gray-900 data-[focus]:bg-white/20"
+                          className="group flex cursor-default select-none items-center rounded-lg px-3 py-1.5 text-sm/6 text-gray-900 data-[focus]:bg-[#006B4E]/5"
                         >
                           {n.label}
                         </ListboxOption>
@@ -354,12 +354,12 @@ export default function DashboardPage() {
                         setStreetInput(e.target.value);
                         setStreet("");
                       }}
-                      className="mt-1 block w-full rounded-lg border border-[#5A73B5]/40 bg-white/10 px-3 py-1.5 text-sm/6 text-gray-900 placeholder:text-[#5A73B5]/60 shadow-sm backdrop-blur-sm focus:outline-2 focus:-outline-offset-2 focus:outline-[#3A5AA5]/40 disabled:border-[#A2A9D4]/30 disabled:cursor-not-allowed"
+                      className="mt-1 block w-full rounded-lg border border-[#649E97]/35 bg-[#F8FBFA] px-3 py-1.5 text-sm/6 text-gray-900 placeholder:text-[#649E97]/60 shadow-sm backdrop-blur-sm focus:outline-2 focus:-outline-offset-2 focus:outline-[#006B4E]/40 disabled:border-[#649E97]/20 disabled:cursor-not-allowed"
                     />
                     <ComboboxOptions
                       anchor="bottom"
                       transition
-                      className="z-40 w-(--input-width) rounded-xl border border-white/10 bg-white/10 backdrop-blur-xl p-1 [--anchor-gap:--spacing(1)] empty:invisible transition duration-100 ease-in data-leave:data-closed:opacity-0 shadow-lg"
+                      className="z-40 w-(--input-width) rounded-xl border border-[#649E97]/15 bg-white p-1 [--anchor-gap:--spacing(1)] empty:invisible transition duration-100 ease-in data-leave:data-closed:opacity-0 shadow-lg"
                     >
                       {streetInput.trim().length < 2 ? null : loadingStreets ? (
                         <div className="px-3 py-1.5 text-sm/6 text-gray-500">Loading…</div>
@@ -370,7 +370,7 @@ export default function DashboardPage() {
                           <ComboboxOption
                             key={s}
                             value={s}
-                            className="group flex cursor-default select-none items-center rounded-lg px-3 py-1.5 text-sm/6 text-gray-900 data-[focus]:bg-white/20"
+                            className="group flex cursor-default select-none items-center rounded-lg px-3 py-1.5 text-sm/6 text-gray-900 data-[focus]:bg-[#006B4E]/5"
                           >
                             {s}
                           </ComboboxOption>
@@ -388,7 +388,7 @@ export default function DashboardPage() {
                       required
                       value={zipCode}
                       onChange={(e) => setZipCode(e.target.value)}
-                      className="block w-full appearance-none rounded-lg border border-[#5A73B5]/40 bg-white/10 px-3 py-1.5 text-sm/6 text-gray-900 shadow-sm backdrop-blur-sm focus:outline-2 focus:-outline-offset-2 focus:outline-[#3A5AA5]/40 disabled:border-[#A2A9D4]/30 disabled:cursor-not-allowed *:text-black"
+                      className="block w-full appearance-none rounded-lg border border-[#649E97]/35 bg-[#F8FBFA] px-3 py-1.5 text-sm/6 text-gray-900 shadow-sm backdrop-blur-sm focus:outline-2 focus:-outline-offset-2 focus:outline-[#006B4E]/40 disabled:border-[#649E97]/20 disabled:cursor-not-allowed *:text-black"
                     >
                       <option value="">
                         {neighborhood?.value ? "Select zip code" : "Select neighborhood first"}
@@ -397,7 +397,7 @@ export default function DashboardPage() {
                         <option key={zip} value={zip}>{zip}</option>
                       ))}
                     </Select>
-                    <ChevronDown className="pointer-events-none absolute top-2.5 right-2.5 size-4 text-[#5A73B5]/60" aria-hidden="true" />
+                    <ChevronDown className="pointer-events-none absolute top-2.5 right-2.5 size-4 text-[#649E97]/60" aria-hidden="true" />
                   </div>
                 </Field>
               </div>
@@ -415,14 +415,14 @@ export default function DashboardPage() {
                       id="householdType"
                       value={householdType}
                       onChange={(e) => setHouseholdType(e.target.value)}
-                      className="block w-full appearance-none rounded-lg border border-[#5A73B5]/40 bg-white/10 px-3 py-1.5 text-sm/6 text-gray-900 shadow-sm backdrop-blur-sm focus:outline-2 focus:-outline-offset-2 focus:outline-[#3A5AA5]/40 *:text-black"
+                      className="block w-full appearance-none rounded-lg border border-[#649E97]/35 bg-[#F8FBFA] px-3 py-1.5 text-sm/6 text-gray-900 shadow-sm backdrop-blur-sm focus:outline-2 focus:-outline-offset-2 focus:outline-[#006B4E]/40 *:text-black"
                     >
                       <option value="">Select household type…</option>
                       {HOUSEHOLD_TYPES.map((h) => (
                         <option key={h.value} value={h.value}>{h.label}</option>
                       ))}
                     </Select>
-                    <ChevronDown className="pointer-events-none absolute top-2.5 right-2.5 size-4 text-[#5A73B5]/60" aria-hidden="true" />
+                    <ChevronDown className="pointer-events-none absolute top-2.5 right-2.5 size-4 text-[#649E97]/60" aria-hidden="true" />
                   </div>
                 </Field>
 
@@ -447,8 +447,8 @@ export default function DashboardPage() {
                           className={cn(
                             "rounded-full border backdrop-blur-sm transition-colors",
                             selected
-                              ? "bg-[#3A5AA5]/10 border-[#3A5AA5]/80 text-gray-900 hover:bg-[#3A5AA5]/20"
-                              : "bg-white/10 border-[#5A73B5]/40 text-gray-700 hover:bg-white/20 hover:border-[#5A73B5]/60"
+                              ? "bg-[#006B4E]/8 border-[#006B4E]/60 text-[#006B4E] hover:bg-[#006B4E]/12"
+                              : "bg-white/60 border-[#649E97]/35 text-gray-700 hover:bg-white/80 hover:border-[#649E97]/50"
                           )}
                         >
                           {p}
@@ -464,7 +464,7 @@ export default function DashboardPage() {
               <Button
                 type="submit"
                 disabled={submitting}
-                className="inline-flex items-center gap-2 rounded-lg border border-[#5A73B5]/40 bg-white/10 px-4 py-1.5 text-sm/6 font-semibold text-gray-900 shadow-sm backdrop-blur-sm focus:not-data-focus:outline-none data-focus:outline-2 data-focus:outline-white/25 data-hover:bg-white/20 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                className="inline-flex items-center gap-2 rounded-lg border border-[#006B4E] bg-[#006B4E] px-4 py-1.5 text-sm/6 font-semibold text-white shadow-sm focus:not-data-focus:outline-none data-focus:outline-2 data-focus:outline-[#006B4E]/40 data-hover:bg-[#006B4E]/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               >
                 {submitting ? "Analyzing…" : "Analyze & Save"}
               </Button>
@@ -475,7 +475,7 @@ export default function DashboardPage() {
         {/* Loading state */}
         {submitting && (
           <section>
-            <div className="w-full rounded-xl bg-white/10 border border-[#7B8DC5]/20 backdrop-blur-2xl p-6">
+            <div className="w-full rounded-xl bg-white border border-[#649E97]/25 p-6">
               <div className="space-y-6">
                 <div className="flex items-center gap-3">
                   <Spinner />
@@ -499,7 +499,7 @@ export default function DashboardPage() {
                 {/* Text skeleton */}
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                   {Array.from({ length: 6 }).map((_, i) => (
-                    <div key={i} className="space-y-2 rounded-lg border border-white/30 p-4">
+                    <div key={i} className="space-y-2 rounded-lg border border-[#649E97]/15 p-4">
                       <Skeleton className="h-4 w-32" />
                       <Skeleton className="h-3 w-full" />
                       <Skeleton className="h-3 w-full" />

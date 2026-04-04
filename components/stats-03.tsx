@@ -17,10 +17,10 @@ export default function Stats03({ data, seriousTypes }: Stats03Props) {
           return (
             <div
               key={item.offense}
-              className={`relative overflow-hidden rounded-xl backdrop-blur-md p-4 border ${
+              className={`relative overflow-hidden rounded-xl p-4 border ${
                 isSerious
-                  ? "border-red-400/70 bg-[#F5ECD8]"
-                  : "border-[#7B8DC5]/20 bg-[#F5ECD8]"
+                  ? "border-red-400/70 bg-white"
+                  : "border-[#649E97]/25 bg-white"
               }`}
             >
               {isSerious && (

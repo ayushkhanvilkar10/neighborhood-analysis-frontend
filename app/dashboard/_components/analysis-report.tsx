@@ -50,7 +50,7 @@ export function AnalysisReport({
 
   return (
     <section>
-      <div className="w-full rounded-xl bg-white/10 border border-[#7B8DC5]/20 backdrop-blur-2xl p-6">
+      <div className="w-full rounded-xl bg-white/10 border border-[#649E97]/20 backdrop-blur-2xl p-6">
         <div className="space-y-6">
           <div>
             <h2 className="text-lg font-semibold text-gray-900">Analysis Report</h2>
@@ -71,7 +71,7 @@ export function AnalysisReport({
           <Button
             type="button"
             onClick={onOpenMap}
-            className="inline-flex items-center gap-2 rounded-lg border border-[#5A73B5]/40 bg-[#F5ECD8] px-4 py-1.5 text-sm/6 font-semibold text-gray-900 shadow-sm backdrop-blur-sm focus:not-data-focus:outline-none data-focus:outline-2 data-focus:outline-white/25 data-hover:bg-[#F5ECD8]/80 transition-colors"
+            className="inline-flex items-center gap-2 rounded-lg border border-[#649E97]/35 bg-[#F8FBFA] px-4 py-1.5 text-sm/6 font-semibold text-gray-900 shadow-sm focus:not-data-focus:outline-none data-focus:outline-2 data-focus:outline-[#006B4E]/40 data-hover:bg-[#649E97]/10 transition-colors"
           >
             <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
               <path fillRule="evenodd" d="M12 1.586l-4 4v12.828l4-4V1.586zM3.707 3.293A1 1 0 002 4v10a1 1 0 00.293.707L6 18.414V5.586L3.707 3.293zM17.707 5.293L14 1.586v12.828l2.293 2.293A1 1 0 0018 16V6a1 1 0 00-.293-.707z" clipRule="evenodd" />
