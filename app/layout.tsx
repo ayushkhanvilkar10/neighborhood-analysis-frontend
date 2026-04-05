@@ -18,6 +18,9 @@ const nanumMyeongjo = Nanum_Myeongjo({
 export const metadata: Metadata = {
   title: "The Hunt",
   description: "Analyze Boston neighborhoods for house hunting",
+  icons: {
+    icon: "/favicon.svg",
+  },
 };
 
 export default function RootLayout({

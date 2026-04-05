@@ -53,6 +53,35 @@ export const NEIGHBORHOODS: { label: string; value: string }[] = [
   { label: "West Roxbury",              value: "West Roxbury" },
 ];
 
+export const BUYER_OR_RENTER: { label: string; value: string }[] = [
+  { label: "Buyer",  value: "Buyer" },
+  { label: "Renter", value: "Renter" },
+];
+
+export const COMMUTE_MODES: string[] = [
+  "Car",
+  "Public transit",
+  "Bike",
+  "Walk",
+  "Remote / No commute",
+];
+
+export const INTERESTS: string[] = [
+  "eat out",
+  "go out for drinks",
+  "grab coffee",
+  "attend live events",
+  "browse local shops",
+  "run & cycle",
+  "go for walks",
+  "walk my dog",
+  "explore parks & nature",
+  "garden",
+  "cook at home",
+  "order takeout",
+  "watch TV",
+];
+
 export const HOUSEHOLD_TYPES: { label: string; value: string }[] = [
   { label: "Living solo",            value: "Living solo" },
   { label: "Couple / Partner",       value: "Couple / Partner" },

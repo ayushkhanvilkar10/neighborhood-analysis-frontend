@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Button, Combobox, ComboboxInput, ComboboxOption, ComboboxOptions, Field, Label, Listbox, ListboxButton, ListboxOption, ListboxOptions, Select } from "@headlessui/react";
+import { Button, Combobox, ComboboxInput, ComboboxOption, ComboboxOptions, Field, Label, Listbox, ListboxButton, ListboxOption, ListboxOptions, Radio, RadioGroup, Select } from "@headlessui/react";
 import { ChevronDown } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
@@ -10,6 +10,9 @@ import {
   NEIGHBORHOODS,
   HOUSEHOLD_TYPES,
   PROPERTY_TYPES,
+  BUYER_OR_RENTER,
+  COMMUTE_MODES,
+  INTERESTS,
   NEIGHBORHOOD_TO_DISTRICT,
   NEIGHBORHOOD_ZIP_CODES,
   BOSTON_API,
@@ -50,9 +53,12 @@ export default function DashboardPage() {
   const [streetSuggestions, setStreetSuggestions] = useState<string[]>([]);
   const [loadingStreets, setLoadingStreets]       = useState(false);
 
-  const [zipCode, setZipCode]         = useState("");
+  const [zipCode, setZipCode]             = useState("");
+  const [buyerOrRenter, setBuyerOrRenter] = useState("");
   const [householdType, setHouseholdType] = useState("");
   const [propertyPrefs, setPropertyPrefs] = useState<string[]>([]);
+  const [commuteMode, setCommuteMode]     = useState("");
+  const [interests, setInterests]         = useState<string[]>([]);
   const [submitting, setSubmitting]   = useState(false);
   const [formError, setFormError]     = useState<string | null>(null);
   const [mapOpen, setMapOpen]         = useState(false);
@@ -115,36 +121,60 @@ export default function DashboardPage() {
       const res = await fetch(`${API_URL}/preferences`, { headers: authHeaders(s) });
       if (!res.ok) return;
       const data = await res.json();
+      if (data.buyer_or_renter)       setBuyerOrRenter(data.buyer_or_renter);
       if (data.household_type)       setHouseholdType(data.household_type);
       if (data.property_preferences?.length) setPropertyPrefs(data.property_preferences);
+      if (data.commute_mode)           setCommuteMode(data.commute_mode);
+      if (data.interests?.length)        setInterests(data.interests);
     } catch { /* silently ignore */ }
     finally { prefsLoaded.current = true; }
   }
 
-  async function savePreferences(s: Session, ht: string, pp: string[]) {
+  async function savePreferences(s: Session, bor: string, ht: string, pp: string[], cm: string, int_: string[]) {
     try {
       await fetch(`${API_URL}/preferences`, {
         method: "PUT",
         headers: authHeaders(s),
         body: JSON.stringify({
+          buyer_or_renter: bor || null,
           household_type: ht || null,
           property_preferences: pp.length > 0 ? pp : null,
+          commute_mode: cm || null,
+          interests: int_.length > 0 ? int_ : null,
         }),
       });
     } catch { /* silently ignore */ }
   }
 
+  // Auto-save when buyer/renter changes
+  useEffect(() => {
+    if (!prefsLoaded.current || !session) return;
+    savePreferences(session, buyerOrRenter, householdType, propertyPrefs, commuteMode, interests);
+  }, [buyerOrRenter]);
+
   // Auto-save when household type changes
   useEffect(() => {
     if (!prefsLoaded.current || !session) return;
-    savePreferences(session, householdType, propertyPrefs);
+    savePreferences(session, buyerOrRenter, householdType, propertyPrefs, commuteMode, interests);
   }, [householdType]);
 
   // Auto-save when property preferences change
   useEffect(() => {
     if (!prefsLoaded.current || !session) return;
-    savePreferences(session, householdType, propertyPrefs);
+    savePreferences(session, buyerOrRenter, householdType, propertyPrefs, commuteMode, interests);
   }, [propertyPrefs]);
+
+  // Auto-save when commute mode changes
+  useEffect(() => {
+    if (!prefsLoaded.current || !session) return;
+    savePreferences(session, buyerOrRenter, householdType, propertyPrefs, commuteMode, interests);
+  }, [commuteMode]);
+
+  // Auto-save when interests change
+  useEffect(() => {
+    if (!prefsLoaded.current || !session) return;
+    savePreferences(session, buyerOrRenter, householdType, propertyPrefs, commuteMode, interests);
+  }, [interests]);
 
 
   // Auto-select the most recent search with analysis on load
@@ -213,11 +243,14 @@ export default function DashboardPage() {
         method: "POST",
         headers: authHeaders(session),
         body: JSON.stringify({
-          neighborhood: neighborhood!.value,
-          street,
-          zip_code: zipCode,
-          ...(householdType && { household_type: householdType }),
-          ...(propertyPrefs.length > 0 && { property_preferences: propertyPrefs }),
+        neighborhood: neighborhood!.value,
+        street,
+        zip_code: zipCode,
+        ...(buyerOrRenter && { buyer_or_renter: buyerOrRenter }),
+        ...(householdType && { household_type: householdType }),
+        ...(propertyPrefs.length > 0 && { property_preferences: propertyPrefs }),
+        ...(commuteMode && { commute_mode: commuteMode }),
+        ...(interests.length > 0 && { interests }),
         }),
       });
       if (!res.ok) {
@@ -402,29 +435,59 @@ export default function DashboardPage() {
                 </Field>
               </div>
 
-              {/* Row 2 — Buyer profile */}
+              {/* Row 3 — Buyer profile */}
               <div className="grid grid-cols-1 gap-4 sm:mt-8">
 
-                {/* Household type dropdown */}
-                <Field className="sm:max-w-xs">
-                  <Label className="block text-sm/6 font-medium text-gray-700">
-                    Household Type <span className="text-gray-400 font-normal">(optional)</span>
-                  </Label>
-                  <div className="relative mt-1">
-                    <Select
-                      id="householdType"
-                      value={householdType}
-                      onChange={(e) => setHouseholdType(e.target.value)}
-                      className="block w-full appearance-none rounded-lg border border-[#649E97]/35 bg-[#F8FBFA] px-3 py-1.5 text-sm/6 text-gray-900 shadow-sm backdrop-blur-sm focus:outline-2 focus:-outline-offset-2 focus:outline-[#006B4E]/40 *:text-black"
+                {/* Buyer/Renter + Household Type side by side */}
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                  {/* Buyer or Renter radio */}
+                  <fieldset>
+                    <legend className="block text-sm font-medium text-gray-700">
+                      I am a… <span className="text-gray-400 font-normal">(optional)</span>
+                    </legend>
+                    <RadioGroup
+                      value={buyerOrRenter}
+                      onChange={(val: string) => setBuyerOrRenter(val === buyerOrRenter ? "" : val)}
+                      className="mt-2 flex gap-4"
                     >
-                      <option value="">Select household type…</option>
-                      {HOUSEHOLD_TYPES.map((h) => (
-                        <option key={h.value} value={h.value}>{h.label}</option>
+                      {BUYER_OR_RENTER.map((opt) => (
+                        <Radio
+                          key={opt.value}
+                          value={opt.value}
+                          className="group flex cursor-pointer items-center gap-2 focus:outline-none"
+                        >
+                          <span className="flex size-4 items-center justify-center rounded-full border border-[#649E97]/50 bg-[#F8FBFA] group-data-[checked]:border-[#006B4E] group-data-[checked]:bg-[#006B4E] transition-colors">
+                            <span className="size-1.5 rounded-full bg-white opacity-0 group-data-[checked]:opacity-100 transition-opacity" />
+                          </span>
+                          <span className="text-sm text-gray-700 group-data-[checked]:text-[#006B4E] group-data-[checked]:font-medium">
+                            {opt.label}
+                          </span>
+                        </Radio>
                       ))}
-                    </Select>
-                    <ChevronDown className="pointer-events-none absolute top-2.5 right-2.5 size-4 text-[#649E97]/60" aria-hidden="true" />
-                  </div>
-                </Field>
+                    </RadioGroup>
+                  </fieldset>
+
+                  {/* Household type dropdown */}
+                  <Field>
+                    <Label className="block text-sm/6 font-medium text-gray-700">
+                      Household Type <span className="text-gray-400 font-normal">(optional)</span>
+                    </Label>
+                    <div className="relative mt-1">
+                      <Select
+                        id="householdType"
+                        value={householdType}
+                        onChange={(e) => setHouseholdType(e.target.value)}
+                        className="block w-full appearance-none rounded-lg border border-[#649E97]/35 bg-[#F8FBFA] px-3 py-1.5 text-sm/6 text-gray-900 shadow-sm backdrop-blur-sm focus:outline-2 focus:-outline-offset-2 focus:outline-[#006B4E]/40 *:text-black"
+                      >
+                        <option value="">Select household type…</option>
+                        {HOUSEHOLD_TYPES.map((h) => (
+                          <option key={h.value} value={h.value}>{h.label}</option>
+                        ))}
+                      </Select>
+                      <ChevronDown className="pointer-events-none absolute top-2.5 right-2.5 size-4 text-[#649E97]/60" aria-hidden="true" />
+                    </div>
+                  </Field>
+                </div>
 
                 {/* Property preferences badges */}
                 <div className="sm:mt-4">
@@ -457,6 +520,72 @@ export default function DashboardPage() {
                     })}
                   </div>
                 </div>
+
+                {/* Commute mode badges */}
+                <div className="sm:mt-4">
+                  <p className="block text-sm font-medium text-gray-700">
+                    Commute Mode{" "}
+                    <span className="font-normal">(optional)</span>
+                  </p>
+                  <div className="mt-2 flex flex-wrap gap-2">
+                    {COMMUTE_MODES.map((m) => {
+                      const selected = commuteMode === m;
+                      return (
+                        <ShadcnButton
+                          key={m}
+                          type="button"
+                          onClick={() => setCommuteMode(selected ? "" : m)}
+                          size="sm"
+                          variant="outline"
+                          className={cn(
+                            "rounded-full border backdrop-blur-sm transition-colors",
+                            selected
+                              ? "bg-[#006B4E]/8 border-[#006B4E]/60 text-[#006B4E] hover:bg-[#006B4E]/12"
+                              : "bg-white/60 border-[#649E97]/35 text-gray-700 hover:bg-white/80 hover:border-[#649E97]/50"
+                          )}
+                        >
+                          {m}
+                        </ShadcnButton>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* Interests badges */}
+                <div className="sm:mt-4">
+                  <p className="block text-sm font-medium text-gray-700">
+                    I like to…{" "}
+                    <span className="font-normal">(optional · pick as many as you want)</span>
+                  </p>
+                  <div className="mt-2 flex flex-wrap gap-2">
+                    {INTERESTS.map((i) => {
+                      const selected = interests.includes(i);
+                      return (
+                        <ShadcnButton
+                          key={i}
+                          type="button"
+                          onClick={() =>
+                            setInterests((prev) =>
+                              prev.includes(i)
+                                ? prev.filter((x) => x !== i)
+                                : [...prev, i]
+                            )
+                          }
+                          size="sm"
+                          variant="outline"
+                          className={cn(
+                            "rounded-full border backdrop-blur-sm transition-colors",
+                            selected
+                              ? "bg-[#006B4E]/8 border-[#006B4E]/60 text-[#006B4E] hover:bg-[#006B4E]/12"
+                              : "bg-white/60 border-[#649E97]/35 text-gray-700 hover:bg-white/80 hover:border-[#649E97]/50"
+                          )}
+                        >
+                          {i}
+                        </ShadcnButton>
+                      );
+                    })}
+                  </div>
+                </div>
               </div>
 
               {formError && <p className="text-sm text-red-600">{formError}</p>}
@@ -475,7 +604,7 @@ export default function DashboardPage() {
         {/* Loading state */}
         {submitting && (
           <section>
-            <div className="w-full rounded-xl bg-white border border-[#649E97]/25 p-6">
+            <div className="w-full rounded-xl bg-white/10 border border-[#649E97]/20 backdrop-blur-2xl p-6">
               <div className="space-y-6">
                 <div className="flex items-center gap-3">
                   <Spinner />
