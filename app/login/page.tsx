@@ -58,7 +58,7 @@ export default function LoginPage() {
       }}
     >
       <SignInPage
-        heroImageSrc="/images/Login_Hero_Green_Gradient_Background.svg"
+        heroVideoSrc="/videos/boston-montage-landing-page.mp4"
         mode={mode}
         onSubmit={handleSubmit}
         onToggleMode={handleToggleMode}

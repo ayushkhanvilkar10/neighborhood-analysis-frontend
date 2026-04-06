@@ -1,13 +1,13 @@
 "use client";
 
 import React, { useState } from 'react';
-import Image from 'next/image';
 import { Eye, EyeOff } from 'lucide-react';
 import { LocationMap } from '@/components/ui/expand-map';
 interface SignInPageProps {
   title?: React.ReactNode;
   description?: React.ReactNode;
-  heroImageSrc?: string;
+  /** Public URL for the hero background video (e.g. `/videos/boston-montage-landing-page.mp4`). Omit to hide the hero column. */
+  heroVideoSrc?: string;
   mode?: 'signin' | 'signup';
   onSubmit?: (event: React.FormEvent<HTMLFormElement>) => void;
   onToggleMode?: () => void;
@@ -25,7 +25,7 @@ const GlassInputWrapper = ({ children }: { children: React.ReactNode }) => (
 export const SignInPage: React.FC<SignInPageProps> = ({
   title,
   description,
-  heroImageSrc,
+  heroVideoSrc,
   mode = 'signin',
   onSubmit,
   onToggleMode,
@@ -46,8 +46,8 @@ export const SignInPage: React.FC<SignInPageProps> = ({
     : "Sign in and find your perfect neighborhood";
 
   return (
-    <div className="h-[100dvh] flex flex-col md:flex-row font-geist w-[100dvw]">
-      <section className="flex-1 flex items-center justify-center p-8">
+    <div className="h-[100dvh] min-h-0 flex flex-col md:flex-row font-geist w-[100dvw]">
+      <section className="flex min-h-0 min-w-0 flex-1 items-center justify-center p-8">
         <div className="w-full max-w-md">
           <div className="flex flex-col gap-6 rounded-xl bg-white/75 border border-[#649E97]/25 backdrop-blur-sm p-8">
             <h1 className="animate-element animate-delay-100 text-4xl md:text-5xl font-semibold leading-tight">
@@ -100,20 +100,24 @@ export const SignInPage: React.FC<SignInPageProps> = ({
         </div>
       </section>
 
-      {heroImageSrc && (
-        <section className="hidden md:block flex-1 relative p-4">
+      {heroVideoSrc && (
+        <section className="relative hidden min-h-0 min-w-0 flex-1 p-4 md:block">
           <div className="animate-slide-right animate-delay-300 absolute inset-4 rounded-3xl overflow-hidden">
-            <Image
-              src={heroImageSrc}
-              alt=""
-              fill
-              unoptimized
-              className="object-cover object-center"
-              priority
-            />
-            <div className="relative z-10 flex flex-col items-center justify-center h-full gap-8">
-              <p className="text-neutral-600 text-xs font-medium tracking-[0.2em] uppercase">Currently In</p>
-              <LocationMap location="Boston, MA" coordinates="42.3601° N, 71.0589° W" />
+            <div className="relative size-full min-h-0">
+              <video
+                className="absolute inset-0 size-full object-cover object-center"
+                src={heroVideoSrc}
+                autoPlay
+                muted
+                loop
+                playsInline
+                preload="auto"
+                aria-hidden
+              />
+              <div className="relative z-10 flex h-full min-h-0 flex-col items-center justify-center gap-8">
+                {/* <p className="text-neutral-600 text-xs font-medium tracking-[0.2em] uppercase">Currently In</p> */}
+                <LocationMap location="Boston, MA" coordinates="42.3601° N, 71.0589° W" />
+              </div>
             </div>
           </div>
         </section>
