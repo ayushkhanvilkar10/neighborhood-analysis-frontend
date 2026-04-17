@@ -1,13 +1,14 @@
 "use client";
 
 import React, { useState } from 'react';
+import Image from 'next/image';
 import { Eye, EyeOff } from 'lucide-react';
 import { LocationMap } from '@/components/ui/expand-map';
 interface SignInPageProps {
   title?: React.ReactNode;
   description?: React.ReactNode;
-  /** Public URL for the hero background video (e.g. `/videos/boston-montage-landing-page.mp4`). Omit to hide the hero column. */
-  heroVideoSrc?: string;
+  /** Public URL for the hero background image (e.g. `/images/Login_Hero_Green_Gradient_Background.svg`). Omit to hide the hero column. */
+  heroImageSrc?: string;
   mode?: 'signin' | 'signup';
   onSubmit?: (event: React.FormEvent<HTMLFormElement>) => void;
   onToggleMode?: () => void;
@@ -25,7 +26,7 @@ const GlassInputWrapper = ({ children }: { children: React.ReactNode }) => (
 export const SignInPage: React.FC<SignInPageProps> = ({
   title,
   description,
-  heroVideoSrc,
+  heroImageSrc,
   mode = 'signin',
   onSubmit,
   onToggleMode,
@@ -100,22 +101,20 @@ export const SignInPage: React.FC<SignInPageProps> = ({
         </div>
       </section>
 
-      {heroVideoSrc && (
+      {heroImageSrc && (
         <section className="relative hidden min-h-0 min-w-0 flex-1 p-4 md:block">
           <div className="animate-slide-right animate-delay-300 absolute inset-4 rounded-3xl overflow-hidden">
             <div className="relative size-full min-h-0">
-              <video
-                className="absolute inset-0 size-full object-cover object-center"
-                src={heroVideoSrc}
-                autoPlay
-                muted
-                loop
-                playsInline
-                preload="auto"
-                aria-hidden
+              <Image
+                src={heroImageSrc}
+                alt=""
+                fill
+                unoptimized
+                className="object-cover object-center"
+                priority
               />
               <div className="relative z-10 flex h-full min-h-0 flex-col items-center justify-center gap-8">
-                {/* <p className="text-neutral-600 text-xs font-medium tracking-[0.2em] uppercase">Currently In</p> */}
+                <p className="text-neutral-600 text-xs font-medium tracking-[0.2em] uppercase">Currently In</p>
                 <LocationMap location="Boston, MA" coordinates="42.3601° N, 71.0589° W" />
               </div>
             </div>

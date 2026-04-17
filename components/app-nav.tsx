@@ -6,7 +6,7 @@ import Link from "next/link";
 import { supabase } from "@/lib/supabase";
 import type { Session } from "@supabase/supabase-js";
 import { Sheet, SheetContent, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
-import { Menu, MapPin, MessageSquare, PlusCircle } from "lucide-react";
+import { Menu, MapPin, MessageSquare, PlusCircle, History, ChevronRight } from "lucide-react";
 
 // ─────────────────────────────────────────────
 // Types
@@ -43,8 +43,9 @@ function NavContent({
   onSelectSession:      (id: string) => void;
   onSignOut:            () => void;
 }) {
-  const isChat     = pathname === "/chat";
+  const isChat      = pathname === "/chat";
   const isDashboard = pathname === "/dashboard";
+  const [showHistory, setShowHistory] = useState(false);
 
   return (
     <div className="flex flex-col h-full px-3 py-5 gap-1">
@@ -93,30 +94,43 @@ function NavContent({
             New Chat
           </button>
 
-          <div className="mt-2 flex-1 overflow-y-auto space-y-0.5">
-            {loadingSessions ? (
-              <p className="text-xs text-white/40 px-3 py-2">Loading…</p>
-            ) : chatSessions.length === 0 ? (
-              <p className="text-xs text-white/40 px-3 py-2">No conversations yet.</p>
-            ) : (
-              chatSessions.map((s) => (
-                <button
-                  key={s.id}
-                  onClick={() => onSelectSession(s.id)}
-                  className={`w-full text-left rounded-lg px-3 py-2 transition-colors ${
-                    activeChatSessionId === s.id
-                      ? "bg-[#649E97]/20 border border-[#649E97]/30"
-                      : "hover:bg-white/10"
-                  }`}
-                >
-                  <p className="truncate text-xs font-medium text-white/90">{s.title}</p>
-                  <p className="text-xs text-white/40 mt-0.5">
-                    {new Date(s.created_at).toLocaleDateString()}
-                  </p>
-                </button>
-              ))
-            )}
-          </div>
+          <button
+            onClick={() => setShowHistory((v) => !v)}
+            className="flex items-center gap-2 w-full rounded-lg px-3 py-1.5 text-sm/6 font-medium text-white/60 hover:bg-white/10 hover:text-white transition-colors"
+          >
+            <History className="size-4 shrink-0" />
+            <span className="truncate">Old Chats</span>
+            <ChevronRight
+              className={`size-4 shrink-0 ml-auto transition-transform duration-200 ${showHistory ? "rotate-90" : ""}`}
+            />
+          </button>
+
+          {showHistory && (
+            <div className="mt-1 flex-1 overflow-y-auto space-y-0.5">
+              {loadingSessions ? (
+                <p className="text-xs text-white/40 px-3 py-2">Loading…</p>
+              ) : chatSessions.length === 0 ? (
+                <p className="text-xs text-white/40 px-3 py-2">No conversations yet.</p>
+              ) : (
+                chatSessions.map((s) => (
+                  <button
+                    key={s.id}
+                    onClick={() => onSelectSession(s.id)}
+                    className={`w-full text-left rounded-lg px-3 py-2 transition-colors ${
+                      activeChatSessionId === s.id
+                        ? "bg-[#649E97]/20 border border-[#649E97]/30"
+                        : "hover:bg-white/10"
+                    }`}
+                  >
+                    <p className="truncate text-xs font-medium text-white/90">{s.title}</p>
+                    <p className="text-xs text-white/40 mt-0.5">
+                      {new Date(s.created_at).toLocaleDateString()}
+                    </p>
+                  </button>
+                ))
+              )}
+            </div>
+          )}
         </div>
       )}
 
@@ -174,7 +188,7 @@ export function AppNav() {
   }, [session]);
 
   // Don't render nav on login page (must be after all hooks)
-  if (pathname === "/login") return null;
+  if (pathname === "/login" || pathname === "/onboarding") return null;
 
   async function fetchChatSessions(s: Session) {
     setLoadingSessions(true);

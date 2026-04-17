@@ -1,8 +1,8 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Button, Combobox, ComboboxInput, ComboboxOption, ComboboxOptions, Field, Label, Listbox, ListboxButton, ListboxOption, ListboxOptions, Radio, RadioGroup, Select } from "@headlessui/react";
-import { ChevronDown } from "lucide-react";
+import { Button, Combobox, ComboboxInput, ComboboxOption, ComboboxOptions, Disclosure, DisclosureButton, DisclosurePanel, Field, Label, Radio, RadioGroup, Select } from "@headlessui/react";
+import { ChevronDown, ChevronRight } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import type { Session } from "@supabase/supabase-js";
@@ -53,6 +53,7 @@ export default function DashboardPage() {
   const [streetSuggestions, setStreetSuggestions] = useState<string[]>([]);
   const [loadingStreets, setLoadingStreets]       = useState(false);
 
+  const [neighborhoodQuery, setNeighborhoodQuery] = useState("");
   const [zipCode, setZipCode]             = useState("");
   const [buyerOrRenter, setBuyerOrRenter] = useState("");
   const [householdType, setHouseholdType] = useState("");
@@ -299,6 +300,12 @@ export default function DashboardPage() {
     } catch { /* silently ignore */ }
   }
 
+  const filteredNeighborhoods = neighborhoodQuery === ""
+    ? NEIGHBORHOODS
+    : NEIGHBORHOODS.filter((n) =>
+        n.label.toLowerCase().includes(neighborhoodQuery.toLowerCase())
+      );
+
   if (!session) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -329,38 +336,45 @@ export default function DashboardPage() {
 
               {/* Row 1 — Neighborhood */}
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-                <Listbox
+                <Combobox
                   value={neighborhood}
                   onChange={(n) => {
                     setNeighborhood(n);
                     setStreetInput(""); setStreet("");
+                    setNeighborhoodQuery(n?.label ?? "");
                   }}
+                  onClose={() => setNeighborhoodQuery(neighborhood?.label ?? "")}
                 >
                   <div className="relative">
                     <Label className="block text-sm/6 font-medium text-gray-700">Neighborhood</Label>
-                    <ListboxButton className="mt-1 flex w-full items-center justify-between rounded-lg border border-[#649E97]/35 bg-[#F8FBFA] px-3 py-1.5 text-sm/6 shadow-sm backdrop-blur-sm focus:outline-2 focus:-outline-offset-2 focus:outline-[#006B4E]/40">
-                      <span className={neighborhood ? "text-gray-900" : "text-[#649E97]/60"}>
-                        {neighborhood?.label ?? "e.g. Back Bay"}
-                      </span>
-                      <ChevronDown className="size-4 text-[#649E97]/60 shrink-0" aria-hidden="true" />
-                    </ListboxButton>
-                    <ListboxOptions
+                    <ComboboxInput
+                      autoComplete="off"
+                      placeholder="e.g. Back Bay"
+                      displayValue={(n: { label: string; value: string } | null) => n?.label ?? ""}
+                      onChange={(e) => setNeighborhoodQuery(e.target.value)}
+                      className="mt-1 block w-full rounded-lg border border-[#649E97]/35 bg-[#F8FBFA] px-3 py-1.5 text-sm/6 text-gray-900 placeholder:text-[#649E97]/60 shadow-sm backdrop-blur-sm focus:outline-2 focus:-outline-offset-2 focus:outline-[#006B4E]/40"
+                    />
+                    <ComboboxOptions
                       anchor="bottom"
                       transition
                       className="z-40 w-(--input-width) rounded-xl border border-[#649E97]/15 bg-white p-1 [--anchor-gap:--spacing(1)] empty:invisible transition duration-100 ease-in data-leave:data-closed:opacity-0 shadow-lg max-h-56 overflow-auto"
                     >
-                      {NEIGHBORHOODS.map((n) => (
-                        <ListboxOption
-                          key={n.label}
-                          value={n}
-                          className="group flex cursor-default select-none items-center rounded-lg px-3 py-1.5 text-sm/6 text-gray-900 data-[focus]:bg-[#006B4E]/5"
-                        >
-                          {n.label}
-                        </ListboxOption>
-                      ))}
-                    </ListboxOptions>
+                      {filteredNeighborhoods.length === 0 ? (
+                        <div className="px-3 py-1.5 text-sm/6 text-gray-500">No neighborhoods found</div>
+                      ) : (
+                        filteredNeighborhoods.map((n) => (
+                          <ComboboxOption
+                            key={n.label}
+                            value={n}
+                            className="group flex cursor-default select-none items-center rounded-lg px-3 py-1.5 text-sm/6 text-gray-900 data-[focus]:bg-[#006B4E]/5"
+                          >
+                            {n.label}
+                          </ComboboxOption>
+                        ))
+                      )}
+                    </ComboboxOptions>
                   </div>
-                </Listbox>
+                </Combobox>
               </div>
 
               {/* Row 2 — Street & Zip Code */}
@@ -435,158 +449,171 @@ export default function DashboardPage() {
                 </Field>
               </div>
 
-              {/* Row 3 — Buyer profile */}
-              <div className="grid grid-cols-1 gap-4 sm:mt-8">
+              {/* Row 3 — Buyer profile (collapsible) */}
+              <Disclosure as="div" defaultOpen={false}>
+                <DisclosureButton className="group flex items-center gap-2 w-full text-left py-2 text-sm font-medium text-gray-700 hover:text-[#006B4E] transition-colors">
+                  <ChevronRight className="size-4 text-[#649E97] transition-transform duration-200 group-data-[open]:rotate-90" />
+                  User Preferences
+                  <span className="text-gray-400 font-normal">(optional)</span>
+                </DisclosureButton>
+                <DisclosurePanel
+                  transition
+                  className="origin-top transition duration-200 ease-out data-[closed]:-translate-y-2 data-[closed]:opacity-0"
+                >
+                  <div className="grid grid-cols-1 gap-4 mt-2">
 
-                {/* Buyer/Renter + Household Type side by side */}
-                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                  {/* Buyer or Renter radio */}
-                  <fieldset>
-                    <legend className="block text-sm font-medium text-gray-700">
-                      I am a… <span className="text-gray-400 font-normal">(optional)</span>
-                    </legend>
-                    <RadioGroup
-                      value={buyerOrRenter}
-                      onChange={(val: string) => setBuyerOrRenter(val === buyerOrRenter ? "" : val)}
-                      className="mt-2 flex gap-4"
-                    >
-                      {BUYER_OR_RENTER.map((opt) => (
-                        <Radio
-                          key={opt.value}
-                          value={opt.value}
-                          className="group flex cursor-pointer items-center gap-2 focus:outline-none"
+                    {/* Buyer/Renter + Household Type side by side */}
+                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                      {/* Buyer or Renter radio */}
+                      <fieldset>
+                        <legend className="block text-sm font-medium text-gray-700">
+                          I am a… <span className="text-gray-400 font-normal">(optional)</span>
+                        </legend>
+                        <RadioGroup
+                          value={buyerOrRenter}
+                          onChange={(val: string) => setBuyerOrRenter(val === buyerOrRenter ? "" : val)}
+                          className="mt-2 flex gap-4"
                         >
-                          <span className="flex size-4 items-center justify-center rounded-full border border-[#649E97]/50 bg-[#F8FBFA] group-data-[checked]:border-[#006B4E] group-data-[checked]:bg-[#006B4E] transition-colors">
-                            <span className="size-1.5 rounded-full bg-white opacity-0 group-data-[checked]:opacity-100 transition-opacity" />
-                          </span>
-                          <span className="text-sm text-gray-700 group-data-[checked]:text-[#006B4E] group-data-[checked]:font-medium">
-                            {opt.label}
-                          </span>
-                        </Radio>
-                      ))}
-                    </RadioGroup>
-                  </fieldset>
+                          {BUYER_OR_RENTER.map((opt) => (
+                            <Radio
+                              key={opt.value}
+                              value={opt.value}
+                              className="group flex cursor-pointer items-center gap-2 focus:outline-none"
+                            >
+                              <span className="flex size-4 items-center justify-center rounded-full border border-[#649E97]/50 bg-[#F8FBFA] group-data-[checked]:border-[#006B4E] group-data-[checked]:bg-[#006B4E] transition-colors">
+                                <span className="size-1.5 rounded-full bg-white opacity-0 group-data-[checked]:opacity-100 transition-opacity" />
+                              </span>
+                              <span className="text-sm text-gray-700 group-data-[checked]:text-[#006B4E] group-data-[checked]:font-medium">
+                                {opt.label}
+                              </span>
+                            </Radio>
+                          ))}
+                        </RadioGroup>
+                      </fieldset>
 
-                  {/* Household type dropdown */}
-                  <Field>
-                    <Label className="block text-sm/6 font-medium text-gray-700">
-                      Household Type <span className="text-gray-400 font-normal">(optional)</span>
-                    </Label>
-                    <div className="relative mt-1">
-                      <Select
-                        id="householdType"
-                        value={householdType}
-                        onChange={(e) => setHouseholdType(e.target.value)}
-                        className="block w-full appearance-none rounded-lg border border-[#649E97]/35 bg-[#F8FBFA] px-3 py-1.5 text-sm/6 text-gray-900 shadow-sm backdrop-blur-sm focus:outline-2 focus:-outline-offset-2 focus:outline-[#006B4E]/40 *:text-black"
-                      >
-                        <option value="">Select household type…</option>
-                        {HOUSEHOLD_TYPES.map((h) => (
-                          <option key={h.value} value={h.value}>{h.label}</option>
-                        ))}
-                      </Select>
-                      <ChevronDown className="pointer-events-none absolute top-2.5 right-2.5 size-4 text-[#649E97]/60" aria-hidden="true" />
+                      {/* Household type dropdown */}
+                      <Field>
+                        <Label className="block text-sm/6 font-medium text-gray-700">
+                          Household Type <span className="text-gray-400 font-normal">(optional)</span>
+                        </Label>
+                        <div className="relative mt-1">
+                          <Select
+                            id="householdType"
+                            value={householdType}
+                            onChange={(e) => setHouseholdType(e.target.value)}
+                            className="block w-full appearance-none rounded-lg border border-[#649E97]/35 bg-[#F8FBFA] px-3 py-1.5 text-sm/6 text-gray-900 shadow-sm backdrop-blur-sm focus:outline-2 focus:-outline-offset-2 focus:outline-[#006B4E]/40 *:text-black"
+                          >
+                            <option value="">Select household type…</option>
+                            {HOUSEHOLD_TYPES.map((h) => (
+                              <option key={h.value} value={h.value}>{h.label}</option>
+                            ))}
+                          </Select>
+                          <ChevronDown className="pointer-events-none absolute top-2.5 right-2.5 size-4 text-[#649E97]/60" aria-hidden="true" />
+                        </div>
+                      </Field>
                     </div>
-                  </Field>
-                </div>
 
-                {/* Property preferences badges */}
-                <div className="sm:mt-4">
-                  <p className="block text-sm font-medium text-gray-700">
-                    Property Preferences{" "}
-                    <span className="font-normal">(optional · pick up to 2)</span>
-                  </p>
-                  <div className="mt-2 flex flex-wrap gap-2">
-                    {PROPERTY_TYPES.map((p) => {
-                      const selected = propertyPrefs.includes(p);
-                      const disabled = !selected && propertyPrefs.length >= 2;
-                      return (
-                        <ShadcnButton
-                          key={p}
-                          type="button"
-                          disabled={disabled}
-                          onClick={() => togglePropertyPref(p)}
-                          size="sm"
-                          variant="outline"
-                          className={cn(
-                            "rounded-full border backdrop-blur-sm transition-colors",
-                            selected
-                              ? "bg-[#006B4E]/8 border-[#006B4E]/60 text-[#006B4E] hover:bg-[#006B4E]/12"
-                              : "bg-white/60 border-[#649E97]/35 text-gray-700 hover:bg-white/80 hover:border-[#649E97]/50"
-                          )}
-                        >
-                          {p}
-                        </ShadcnButton>
-                      );
-                    })}
-                  </div>
-                </div>
+                    {/* Property preferences badges */}
+                    <div className="sm:mt-4">
+                      <p className="block text-sm font-medium text-gray-700">
+                        Property Preferences{" "}
+                        <span className="font-normal">(optional · pick up to 2)</span>
+                      </p>
+                      <div className="mt-2 flex flex-wrap gap-2">
+                        {PROPERTY_TYPES.map((p) => {
+                          const selected = propertyPrefs.includes(p);
+                          const disabled = !selected && propertyPrefs.length >= 2;
+                          return (
+                            <ShadcnButton
+                              key={p}
+                              type="button"
+                              disabled={disabled}
+                              onClick={() => togglePropertyPref(p)}
+                              size="sm"
+                              variant="outline"
+                              className={cn(
+                                "rounded-full border backdrop-blur-sm transition-colors",
+                                selected
+                                  ? "bg-[#006B4E]/8 border-[#006B4E]/60 text-[#006B4E] hover:bg-[#006B4E]/12"
+                                  : "bg-white/60 border-[#649E97]/35 text-gray-700 hover:bg-white/80 hover:border-[#649E97]/50"
+                              )}
+                            >
+                              {p}
+                            </ShadcnButton>
+                          );
+                        })}
+                      </div>
+                    </div>
 
-                {/* Commute mode badges */}
-                <div className="sm:mt-4">
-                  <p className="block text-sm font-medium text-gray-700">
-                    Commute Mode{" "}
-                    <span className="font-normal">(optional)</span>
-                  </p>
-                  <div className="mt-2 flex flex-wrap gap-2">
-                    {COMMUTE_MODES.map((m) => {
-                      const selected = commuteMode === m;
-                      return (
-                        <ShadcnButton
-                          key={m}
-                          type="button"
-                          onClick={() => setCommuteMode(selected ? "" : m)}
-                          size="sm"
-                          variant="outline"
-                          className={cn(
-                            "rounded-full border backdrop-blur-sm transition-colors",
-                            selected
-                              ? "bg-[#006B4E]/8 border-[#006B4E]/60 text-[#006B4E] hover:bg-[#006B4E]/12"
-                              : "bg-white/60 border-[#649E97]/35 text-gray-700 hover:bg-white/80 hover:border-[#649E97]/50"
-                          )}
-                        >
-                          {m}
-                        </ShadcnButton>
-                      );
-                    })}
-                  </div>
-                </div>
+                    {/* Commute mode badges */}
+                    <div className="sm:mt-4">
+                      <p className="block text-sm font-medium text-gray-700">
+                        Commute Mode{" "}
+                        <span className="font-normal">(optional)</span>
+                      </p>
+                      <div className="mt-2 flex flex-wrap gap-2">
+                        {COMMUTE_MODES.map((m) => {
+                          const selected = commuteMode === m;
+                          return (
+                            <ShadcnButton
+                              key={m}
+                              type="button"
+                              onClick={() => setCommuteMode(selected ? "" : m)}
+                              size="sm"
+                              variant="outline"
+                              className={cn(
+                                "rounded-full border backdrop-blur-sm transition-colors",
+                                selected
+                                  ? "bg-[#006B4E]/8 border-[#006B4E]/60 text-[#006B4E] hover:bg-[#006B4E]/12"
+                                  : "bg-white/60 border-[#649E97]/35 text-gray-700 hover:bg-white/80 hover:border-[#649E97]/50"
+                              )}
+                            >
+                              {m}
+                            </ShadcnButton>
+                          );
+                        })}
+                      </div>
+                    </div>
 
-                {/* Interests badges */}
-                <div className="sm:mt-4">
-                  <p className="block text-sm font-medium text-gray-700">
-                    I like to…{" "}
-                    <span className="font-normal">(optional · pick as many as you want)</span>
-                  </p>
-                  <div className="mt-2 flex flex-wrap gap-2">
-                    {INTERESTS.map((i) => {
-                      const selected = interests.includes(i);
-                      return (
-                        <ShadcnButton
-                          key={i}
-                          type="button"
-                          onClick={() =>
-                            setInterests((prev) =>
-                              prev.includes(i)
-                                ? prev.filter((x) => x !== i)
-                                : [...prev, i]
-                            )
-                          }
-                          size="sm"
-                          variant="outline"
-                          className={cn(
-                            "rounded-full border backdrop-blur-sm transition-colors",
-                            selected
-                              ? "bg-[#006B4E]/8 border-[#006B4E]/60 text-[#006B4E] hover:bg-[#006B4E]/12"
-                              : "bg-white/60 border-[#649E97]/35 text-gray-700 hover:bg-white/80 hover:border-[#649E97]/50"
-                          )}
-                        >
-                          {i}
-                        </ShadcnButton>
-                      );
-                    })}
+                    {/* Interests badges */}
+                    <div className="sm:mt-4">
+                      <p className="block text-sm font-medium text-gray-700">
+                        I like to…{" "}
+                        <span className="font-normal">(optional · pick as many as you want)</span>
+                      </p>
+                      <div className="mt-2 flex flex-wrap gap-2">
+                        {INTERESTS.map((i) => {
+                          const selected = interests.includes(i);
+                          return (
+                            <ShadcnButton
+                              key={i}
+                              type="button"
+                              onClick={() =>
+                                setInterests((prev) =>
+                                  prev.includes(i)
+                                    ? prev.filter((x) => x !== i)
+                                    : [...prev, i]
+                                )
+                              }
+                              size="sm"
+                              variant="outline"
+                              className={cn(
+                                "rounded-full border backdrop-blur-sm transition-colors",
+                                selected
+                                  ? "bg-[#006B4E]/8 border-[#006B4E]/60 text-[#006B4E] hover:bg-[#006B4E]/12"
+                                  : "bg-white/60 border-[#649E97]/35 text-gray-700 hover:bg-white/80 hover:border-[#649E97]/50"
+                              )}
+                            >
+                              {i}
+                            </ShadcnButton>
+                          );
+                        })}
+                      </div>
+                    </div>
+
                   </div>
-                </div>
-              </div>
+                </DisclosurePanel>
+              </Disclosure>
 
               {formError && <p className="text-sm text-red-600">{formError}</p>}
 

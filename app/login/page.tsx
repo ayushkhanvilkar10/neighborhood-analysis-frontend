@@ -34,7 +34,7 @@ export default function LoginPage() {
       if (error) {
         setError(error.message);
       } else {
-        router.push("/dashboard");
+        router.push("/");
       }
     }
 
@@ -58,7 +58,7 @@ export default function LoginPage() {
       }}
     >
       <SignInPage
-        heroVideoSrc="/videos/boston-montage-landing-page.mp4"
+        heroImageSrc="/images/Login_Hero_Green_Gradient_Background.svg"
         mode={mode}
         onSubmit={handleSubmit}
         onToggleMode={handleToggleMode}

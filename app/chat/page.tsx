@@ -310,14 +310,14 @@ function ChatPageInner() {
                 ) : (
                   <ReactMarkdown
                     components={{
-                      p:      ({ children }) => <p className="text-sm leading-relaxed">{children}</p>,
+                      p:      ({ children }) => <p className="text-sm leading-relaxed mb-3 last:mb-0">{children}</p>,
                       strong: ({ children }) => <strong className="font-semibold">{children}</strong>,
-                      ul:     ({ children }) => <ul className="list-disc list-outside ml-4 space-y-0.5 text-sm">{children}</ul>,
-                      ol:     ({ children }) => <ol className="list-decimal list-outside ml-4 space-y-0.5 text-sm">{children}</ol>,
-                      li:     ({ children }) => <li className="leading-relaxed">{children}</li>,
+                      ul:     ({ children }) => <ul className="list-disc list-outside ml-4 space-y-1.5 text-sm mt-2 mb-3">{children}</ul>,
+                      ol:     ({ children }) => <ol className="list-decimal list-outside ml-4 space-y-1.5 text-sm mt-2 mb-3">{children}</ol>,
+                      li:     ({ children }) => <li className="leading-relaxed pl-1">{children}</li>,
                       h1:     ({ children }) => <h1 className="text-base font-semibold mt-3 mb-1">{children}</h1>,
-                      h2:     ({ children }) => <h2 className="text-sm font-semibold mt-3 mb-1">{children}</h2>,
-                      h3:     ({ children }) => <h3 className="text-sm font-medium mt-2 mb-1">{children}</h3>,
+                      h2:     ({ children }) => <h2 className="text-sm font-semibold mt-4 mb-2">{children}</h2>,
+                      h3:     ({ children }) => <h3 className="text-sm font-medium mt-3 mb-1.5">{children}</h3>,
                       code:   ({ children }) => <code className="bg-gray-100 text-gray-800 rounded px-1 py-0.5 text-xs font-mono">{children}</code>,
                     }}
                   >{msg.content}</ReactMarkdown>
