@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useState } from 'react';
-import Image from 'next/image';
 import { Eye, EyeOff } from 'lucide-react';
 import { LocationMap } from '@/components/ui/expand-map';
 interface SignInPageProps {
@@ -105,16 +104,17 @@ export const SignInPage: React.FC<SignInPageProps> = ({
         <section className="relative hidden min-h-0 min-w-0 flex-1 p-4 md:block">
           <div className="animate-slide-right animate-delay-300 absolute inset-4 rounded-3xl overflow-hidden">
             <div className="relative size-full min-h-0">
-              <Image
-                src={heroImageSrc}
-                alt=""
-                fill
-                unoptimized
-                className="object-cover object-center"
-                priority
-              />
+              <video
+                autoPlay
+                loop
+                muted
+                playsInline
+                className="absolute inset-0 size-full object-cover object-center"
+              >
+                <source src="/videos/boston-montage-landing-page.mp4" type="video/mp4" />
+              </video>
               <div className="relative z-10 flex h-full min-h-0 flex-col items-center justify-center gap-8">
-                <p className="text-neutral-600 text-xs font-medium tracking-[0.2em] uppercase">Currently In</p>
+                {/* <p className="text-neutral-600 text-xs font-medium tracking-[0.2em] uppercase">Currently In</p> */}
                 <LocationMap location="Boston, MA" coordinates="42.3601° N, 71.0589° W" />
               </div>
             </div>
