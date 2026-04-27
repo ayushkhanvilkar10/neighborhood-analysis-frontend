@@ -266,7 +266,7 @@ function ChatPageInner() {
                   <button
                     key={label}
                     onClick={() => handleSend(prompt)}
-                    className="rounded-xl bg-white/65 border border-[#649E97]/25 backdrop-blur-md px-4 py-3 text-left hover:bg-white/85 hover:border-[#006B4E]/30 transition-colors group"
+                    className="rounded-xl bg-white/65 border border-[#649E97]/25 backdrop-blur-md px-4 py-3 text-left hover:bg-white/85 hover:border-[#006B4E]/30 hover:scale-[1.03] hover:shadow-md transition-all duration-200 group"
                   >
                     <p className="text-xs font-semibold uppercase tracking-wide text-gray-500 group-hover:text-[#006B4E] transition-colors">{label}</p>
                     <p className="text-sm text-gray-700 mt-0.5 leading-snug">{prompt}</p>
